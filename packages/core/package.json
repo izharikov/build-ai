@@ -1,0 +1,22 @@
+{
+  "name": "@page-builder/core",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "pnpm clean && tsup",
+    "build:watch": "pnpm clean && tsup --watch",
+    "clean": "rimraf dist"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@ai-sdk/openai": "2.0.0-alpha.15",
+    "ai": "5.0.0-alpha.15"
+  },
+  "devDependencies": {
+    "rimraf": "^6.0.1",
+    "tsup": "^8.5.0"
+  }
+}
