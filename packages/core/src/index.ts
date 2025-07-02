@@ -7,7 +7,10 @@ import {
   UIMessageStreamWriter,
 } from 'ai';
 import { openai } from '@ai-sdk/openai';
-import z from 'zod';
+import z from 'zod/v4';
+import { HardcodedSitecoreComponentsProvider } from './components/sitecore/HardcodedSitecoreComponentsProvider';
+import { pageStructureSchema } from './helpers/schema-generator';
+import { objectSchema } from './lib/ai';
 
 const model = openai('gpt-4.1-nano');
 
@@ -55,7 +58,7 @@ function streamHighLevelStructure(chat: ChatContext) {
     messages: convertToModelMessages(chat.messages),
     system: `
 ## Instructions
-Generate a page based on the provided structure and components.
+Generate a page based on user requirements.
         `,
     schema: z.object({
       page: z
@@ -80,6 +83,9 @@ export const generatePage = async (
   writer: UIMessageStreamWriter,
 ) => {
   function state(type: string, data?: unknown) {
+    if (!type) {
+      return;
+    }
     writer.write({
       type: `data-${type}`,
       id: type,
@@ -113,6 +119,12 @@ export const generatePage = async (
     streamHighLevelStructure(chat),
   );
 
+  // TODO: pass it from original func
+  const componentsProvider = new HardcodedSitecoreComponentsProvider();
+  const { schema, registry } = pageStructureSchema(
+    await componentsProvider.getComponents(),
+  );
+
   // now we have the high level structure, we can generate the page
   const page = await writeObjectStream(
     'page',
@@ -125,21 +137,7 @@ Generate a page based on the provided structure and components.
 
 Structure: ${JSON.stringify(highLevelStructure, null, 2)}
         `,
-      schema: z.object({
-        page: z
-          .object({
-            title: z.string().describe('Page title'),
-            description: z.string().describe('Page description'),
-            components: z
-              .array(
-                z.object({
-                  name: z.string().describe('Component name'),
-                }),
-              )
-              .describe('Components to include in the page'),
-          })
-          .describe('Page structure and content'),
-      }),
+      schema: objectSchema(schema, registry),
     }),
   );
 

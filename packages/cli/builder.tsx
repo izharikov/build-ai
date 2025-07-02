@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { render, Box, Text } from 'ink';
+import { render, Box, Text, useApp, useInput } from 'ink';
 import { TextInput, Spinner } from '@inkjs/ui';
 import { streamPage } from '@page-builder/core';
 import dotenv from 'dotenv';
@@ -17,8 +17,16 @@ const PageBuilder = () => {
   const { messages, sendMessage, status } = useChat({
     transport,
     onError: (error) => {
+      console.error('Error:', error);
       setError(error.message);
     },
+  });
+
+  const { exit } = useApp();
+  useInput((input) => {
+    if (input === 'q') {
+      exit();
+    }
   });
 
   useEffect(() => {

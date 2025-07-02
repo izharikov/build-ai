@@ -47,4 +47,3 @@ next-env.d.ts
 
 # local storage
 /.page-builder
-.vscode/settings.json

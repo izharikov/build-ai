@@ -1,8 +1,8 @@
 import { ComponentsProvider, Component } from '../index';
 
 export class HardcodedSitecoreComponentsProvider implements ComponentsProvider {
-  getComponents(): Component[] {
-    return [
+  getComponents(): Promise<Component[]> {
+    return Promise.resolve([
       {
         id: 'accordion',
         name: 'Accordion',
@@ -77,7 +77,7 @@ export class HardcodedSitecoreComponentsProvider implements ComponentsProvider {
           fields: [{ name: 'selectedTab', type: 'number' }],
         },
         placement: {
-          allowedParentPlaceholders: ['main'],
+          allowedParentPlaceholders: ['main', 'accordion-items'],
           allowedChildPlaceholders: ['tab-items'],
         },
       },
@@ -167,7 +167,12 @@ export class HardcodedSitecoreComponentsProvider implements ComponentsProvider {
           fields: [{ name: 'content', type: 'rte' }],
         },
         placement: {
-          allowedParentPlaceholders: ['main'],
+          allowedParentPlaceholders: [
+            'main',
+            'accordion-items',
+            'row-1',
+            'row-2',
+          ],
           allowedChildPlaceholders: [],
         },
       },
@@ -220,7 +225,7 @@ export class HardcodedSitecoreComponentsProvider implements ComponentsProvider {
           ],
         },
         placement: {
-          allowedParentPlaceholders: ['main'],
+          allowedParentPlaceholders: ['main', 'row-1', 'row-2'],
           allowedChildPlaceholders: [],
         },
       },
@@ -236,7 +241,7 @@ export class HardcodedSitecoreComponentsProvider implements ComponentsProvider {
           ],
         },
         placement: {
-          allowedParentPlaceholders: ['main'],
+          allowedParentPlaceholders: ['main', 'row-1', 'row-2'],
           allowedChildPlaceholders: [],
         },
       },
@@ -378,6 +383,6 @@ export class HardcodedSitecoreComponentsProvider implements ComponentsProvider {
           allowedChildPlaceholders: [],
         },
       },
-    ];
+    ]);
   }
 }

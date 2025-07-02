@@ -33,5 +33,5 @@ export type Field = {
 };
 
 export interface ComponentsProvider {
-  getComponents(): Component[];
+  getComponents(): Promise<Component[]>;
 }

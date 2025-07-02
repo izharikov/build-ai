@@ -1,0 +1,9 @@
+{
+    "nuxt.isNuxtApp": false,
+    "npm.packageManager": "pnpm",
+    "npm.scriptRunner": "pnpm",
+    "editor.tabSize": 2,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "always"
+    }
+}
