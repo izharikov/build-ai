@@ -16,6 +16,7 @@
     "@page-builder/core": "workspace:*",
     "ai": "5.0.0-alpha.15",
     "dotenv": "^16.5.0",
+    "find-config": "^1.0.0",
     "ink": "^6.0.0",
     "react": "^19.1.0"
   },

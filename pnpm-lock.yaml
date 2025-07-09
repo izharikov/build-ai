@@ -48,6 +48,9 @@ importers:
       dotenv:
         specifier: ^16.5.0
         version: 16.5.0
+      find-config:
+        specifier: ^1.0.0
+        version: 1.0.0
       ink:
         specifier: ^6.0.0
         version: 6.0.0(@types/react@19.1.8)(react@19.1.0)
@@ -73,7 +76,16 @@ importers:
       ai:
         specifier: 5.0.0-alpha.15
         version: 5.0.0-alpha.15(zod@3.25.67)
+      find-config:
+        specifier: ^1.0.0
+        version: 1.0.0
     devDependencies:
+      '@types/find-config':
+        specifier: ^1.0.4
+        version: 1.0.4
+      '@types/node':
+        specifier: ^24.0.8
+        version: 24.0.8
       dotenv:
         specifier: ^16.5.0
         version: 16.5.0
@@ -503,6 +515,9 @@ packages:
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
 
+  '@types/find-config@1.0.4':
+    resolution: {integrity: sha512-BCXaKgzHK7KnfCQBRQBWGTA+QajOE9uFolXPt+9EktiiMS56D8oXF2ZCh9eCxuEyfqDmX/mYIcmWg9j9f659eg==}
+
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
@@ -872,6 +887,10 @@ packages:
     resolution: {integrity: sha512-YsGpe3WHLK8ZYi4tWDg2Jy3ebRz2rXowDxnld4bkQB00cc/1Zw9AWnC0i9ztDJitivtQvaI9KaLyKrc+hBW0yg==}
     engines: {node: '>=8'}
 
+  find-config@1.0.0:
+    resolution: {integrity: sha512-Z+suHH+7LSE40WfUeZPIxSxypCWvrzdVc60xAjUShZeT5eMWM0/FQUduq3HjluyfAHWvC/aOBkT1pTZktyF/jg==}
+    engines: {node: '>= 0.12'}
+
   find-up@5.0.0:
     resolution: {integrity: sha512-78/PXT1wlLLDgTzDs7sjq9hzz0vXD+zn+7wypEe4fXQxCmdmqfGsEPQxmiCSQI3ajFV91bVSsvNtrJRiW6nGng==}
     engines: {node: '>=10'}
@@ -1121,6 +1140,10 @@ packages:
   optionator@0.9.4:
     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}
     engines: {node: '>= 0.8.0'}
+
+  os-homedir@1.0.2:
+    resolution: {integrity: sha512-B5JU3cabzk8c67mRRd3ECmROafjYMXbuzlwtqdM8IbS8ktlTix8aFGb2bAGKrSRIlnfKwovGUUr72JUPyOb6kQ==}
+    engines: {node: '>=0.10.0'}
 
   p-limit@3.1.0:
     resolution: {integrity: sha512-TYOanM3wGwNGsZN2cVTYPArw454xnXj5qmWF1bEoAc4+cU/ol7GVh7odevjp1FNHduHc3KZMcFduxU5Xc6uJRQ==}
@@ -1441,6 +1464,10 @@ packages:
     resolution: {integrity: sha512-Rb46I4cGGVBmjamjphe8L/UnvJD+uPPtTkNvX5mZgqdbavhI4EbgIWJiIHXJ8bc/i9EQGPRh4DwEURJ552Do0A==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  user-home@2.0.0:
+    resolution: {integrity: sha512-KMWqdlOcjCYdtIJpicDSFBQ8nFwS2i9sslAd6f4+CBGcU4gist2REnr2fxj2YocvJFxSF3ZOHLYLVZnUxv4BZQ==}
+    engines: {node: '>=0.10.0'}
 
   webidl-conversions@4.0.2:
     resolution: {integrity: sha512-YQ+BmxuTgd6UXZW3+ICGfyqRyHXVlD5GtQr5+qjiNW7bF0cqrzX500HVXPBOvgXb5YnzDd+h0zqyv61KUD7+Sg==}
@@ -1799,6 +1826,8 @@ snapshots:
   '@standard-schema/spec@1.0.0': {}
 
   '@types/estree@1.0.8': {}
+
+  '@types/find-config@1.0.4': {}
 
   '@types/json-schema@7.0.15': {}
 
@@ -2193,6 +2222,10 @@ snapshots:
     dependencies:
       to-regex-range: 5.0.1
 
+  find-config@1.0.0:
+    dependencies:
+      user-home: 2.0.0
+
   find-up@5.0.0:
     dependencies:
       locate-path: 6.0.0
@@ -2440,6 +2473,8 @@ snapshots:
       prelude-ls: 1.2.1
       type-check: 0.4.0
       word-wrap: 1.2.5
+
+  os-homedir@1.0.2: {}
 
   p-limit@3.1.0:
     dependencies:
@@ -2746,6 +2781,10 @@ snapshots:
   use-sync-external-store@1.5.0(react@19.1.0):
     dependencies:
       react: 19.1.0
+
+  user-home@2.0.0:
+    dependencies:
+      os-homedir: 1.0.2
 
   webidl-conversions@4.0.2: {}
 

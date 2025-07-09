@@ -1,22 +1,18 @@
 {
   "compilerOptions": {
     "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "target": "ES2022",
-    "jsx": "react-jsx",
+    "moduleResolution": "bundler",
+    "target": "esnext",
     "strictNullChecks": true,
     "strictFunctionTypes": true,
     "sourceMap": true,
+    "declarationMap": true,
+    "declaration": true,
     "esModuleInterop": true,
-    "baseUrl": "./",
     "paths": {
       "@/*": [
         "./src/*"
       ]
     }
-  },
-  "exclude": [
-    "node_modules",
-    "**/node_modules/*"
-  ]
+  }
 }

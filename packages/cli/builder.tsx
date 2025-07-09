@@ -6,8 +6,30 @@ import dotenv from 'dotenv';
 import { useChat } from '@ai-sdk/react';
 import { StreamChatTransport } from './lib/StreamChatTransport';
 
+import findConfig from 'find-config';
+import { FileStorage } from '@page-builder/core/storage';
+import {
+  CachedComponentsProvider,
+  SitecoreGraphqlAuthoringComponentsProvider,
+} from '@page-builder/core/components';
+
+dotenv.config({ path: findConfig('.env') });
+
 const transport = new StreamChatTransport(({ messages }) =>
-  streamPage({ messages }),
+  streamPage(
+    { messages },
+    new CachedComponentsProvider(
+      new SitecoreGraphqlAuthoringComponentsProvider(
+        {
+          accessToken: process.env.SITECORE_GRAPHQL_ACCESS_TOKEN!,
+          baseUrl: process.env.SITECORE_GRAPHQL_BASE_URL!,
+        },
+        process.env.SITECORE_SITE!,
+      ),
+      ['.sitecore', process.env.SITECORE_SITE!],
+    ),
+    new FileStorage(['.sitecore', 'pages']),
+  ),
 );
 
 const PageBuilder = () => {
@@ -67,5 +89,4 @@ const PageBuilder = () => {
   );
 };
 
-dotenv.config();
 render(<PageBuilder />);

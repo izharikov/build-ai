@@ -44,22 +44,29 @@ function getDatasourceSchema(component: Component) {
         fields[key] = z.array(z.string());
         break;
       case 'rte':
-        fields[key] = z.string().describe('Rich text editor content');
+        fields[key] = z
+          .string()
+          .describe('HTML field content (used in RTE field)');
         break;
       case 'date':
         fields[key] = z.iso.datetime().describe('Date value');
         break;
     }
   }
-  return z.object(fields).describe('Content datasource for ' + component.name);
+  return z
+    .object({
+      name: z.string().describe('Name of the datasource'),
+      fields: z.object(fields),
+    })
+    .describe('Content datasource for ' + component.name);
 }
 
 function registerComponentSchema(component: Component, repo: SchemaRepository) {
   let schema = z.object({
     name: z.literal(component.name).describe('Component name'),
-    description: z
+    internalDescription: z
       .string()
-      .describe('Short component description (max 7 words)'),
+      .describe('internal short component description (max 5 words)'),
   });
 
   const datasourceSchema = getDatasourceSchema(component);
@@ -68,10 +75,15 @@ function registerComponentSchema(component: Component, repo: SchemaRepository) {
       datasource: datasourceSchema,
     });
   }
-
-  schema = schema.describe(
-    `Component ${component.name}. Description: ${component.description}. Instructions: ${component.instructions}`,
-  );
+  const description = [
+    ['Component', component.name],
+    ['Description', component.description],
+    ['Instructions', component.instructions],
+  ]
+    .filter(([, value]) => value)
+    .map(([key, value]) => `${key}: ${value}`)
+    .join(' ');
+  schema = schema.describe(description);
   repo[idFunc(component)] = schema;
   return schema;
 }
@@ -84,28 +96,48 @@ function populateSchema(
   let schema = getExistingScema(repo, component);
   const childPlaceholders = component.placement.allowedChildPlaceholders;
   if (childPlaceholders.length > 0) {
-    const allowedChildrenComponents = allComponents.filter((c) =>
-      c.placement.allowedParentPlaceholders.some(
-        (p) => childPlaceholders.indexOf(p) >= 0,
-      ),
-    );
-    if (allowedChildrenComponents.length < 1) {
-      return;
+    for (const childPlaceholder of childPlaceholders) {
+      const allowedChildrenComponents = allComponents.filter((c) =>
+        c.placement.allowedParentPlaceholders.includes(childPlaceholder),
+      );
+
+      if (allowedChildrenComponents.length == 0) {
+        continue;
+      }
+
+      if (allowedChildrenComponents.length == 1) {
+        schema = schema.extend({
+          [childPlaceholder]: z
+            .array(getExistingScema(repo, allowedChildrenComponents[0]))
+            .describe(
+              `Components inserted into placeholder '${childPlaceholder}'`,
+            ),
+        });
+        continue;
+      }
+      schema = schema.extend({
+        [childPlaceholder]: z
+          .array(
+            z.union(
+              allowedChildrenComponents.map((component) =>
+                getExistingScema(repo, component),
+              ),
+            ),
+          )
+          .describe(
+            `Components inserted into placeholder '${childPlaceholder}'`,
+          ),
+      });
     }
-    // children should be an object
-    schema = schema.extend({
-      children: z.union(
-        allowedChildrenComponents.map((component) =>
-          getExistingScema(repo, component),
-        ),
-      ),
-    });
 
     repo[idFunc(component)] = schema;
   }
 }
 
-export function pageStructureSchema(components: Component[]) {
+export function pageStructureSchema(
+  components: Component[],
+  mainPlaceholder: string = '__main__',
+) {
   const registry = z.registry<JSONSchemaMeta>();
   const repo: SchemaRepository = {};
   for (const component of components) {
@@ -121,7 +153,15 @@ export function pageStructureSchema(components: Component[]) {
       title: z.string().describe('Page title'),
       description: z.string().describe('Page description'),
       main: z
-        .array(z.union(components.map((c) => getExistingScema(repo, c))))
+        .array(
+          z.union(
+            components
+              .filter((x) =>
+                x.placement.allowedParentPlaceholders.includes(mainPlaceholder),
+              )
+              .map((c) => getExistingScema(repo, c)),
+          ),
+        )
         .describe('Page components'),
     })
     .register(registry, {

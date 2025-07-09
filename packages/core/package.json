@@ -3,11 +3,30 @@
   "version": "1.0.0",
   "type": "module",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./storage": {
+      "types": "./dist/storage/index.d.ts",
+      "import": "./dist/storage/index.js",
+      "require": "./dist/storage/index.cjs"
+    },
+    "./components": {
+      "types": "./dist/components/index.d.ts",
+      "import": "./dist/components/index.js",
+      "require": "./dist/components/index.cjs"
+    }
+  },
   "scripts": {
     "build": "pnpm clean && tsup",
-    "build:watch": "pnpm clean && tsup --watch",
+    "build:dev": "pnpm clean && tsc --emitDeclarationOnly && tsup",
     "clean": "rimraf dist",
-    "helper:test": "tsx src/test.ts"
+    "helper:test": "tsx temp-run/test-schema.ts",
+    "helper:gql": "tsx temp-run/test-gql.ts"
   },
   "keywords": [],
   "author": "",
@@ -15,9 +34,12 @@
   "description": "",
   "dependencies": {
     "@ai-sdk/openai": "2.0.0-alpha.15",
-    "ai": "5.0.0-alpha.15"
+    "ai": "5.0.0-alpha.15",
+    "find-config": "^1.0.0"
   },
   "devDependencies": {
+    "@types/find-config": "^1.0.4",
+    "@types/node": "^24.0.8",
     "dotenv": "^16.5.0",
     "rimraf": "^6.0.1",
     "tsup": "^8.5.0",
