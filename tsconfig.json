@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "jsx": "react-jsx",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "target": "esnext",
@@ -8,11 +9,6 @@
     "sourceMap": true,
     "declarationMap": true,
     "declaration": true,
-    "esModuleInterop": true,
-    "paths": {
-      "@/*": [
-        "./src/*"
-      ]
-    }
+    "esModuleInterop": true
   }
 }

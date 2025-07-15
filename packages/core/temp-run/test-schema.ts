@@ -12,21 +12,22 @@ dotenv.config({ path: findConfig('.env') ?? undefined });
 const site = 'blueprint';
 
 const provider = new SitecoreGraphqlAuthoringComponentsProvider(
-  {
-    accessToken: process.env.SITECORE_GRAPHQL_ACCESS_TOKEN!,
-    baseUrl: process.env.SITECORE_GRAPHQL_BASE_URL!,
-  },
-  site,
+    {
+        accessToken: process.env.SITECORE_GRAPHQL_ACCESS_TOKEN!,
+        baseUrl: process.env.SITECORE_GRAPHQL_BASE_URL!,
+    },
+    site,
 );
-const componentsProvider = new CachedComponentsProvider(provider, [
-  '.sitecore',
-  site,
-]);
+const componentsProvider = new CachedComponentsProvider(
+    provider,
+    ['.sitecore', site],
+    true,
+);
 
 console.log('... Generate schema');
 
 const { schema, registry } = pageStructureSchema(
-  await componentsProvider.getComponents(),
+    await componentsProvider.getComponents(),
 );
 
 console.log('... Generate object');
@@ -34,14 +35,14 @@ console.log('... Generate object');
 const finalSchema = objectSchema(schema, registry);
 
 const stream = streamObject({
-  model: openai('gpt-4.1-mini'),
-  messages: [
-    {
-      role: 'user',
-      content: `I write a comprehensive guide on Sitecore pipeline: ootb pipelines, how to write a custom pipeline, etc.`,
-    },
-  ],
-  system: `
+    model: openai('gpt-4.1-mini'),
+    messages: [
+        {
+            role: 'user',
+            content: `I write a comprehensive guide on Sitecore pipeline: ootb pipelines, how to write a custom pipeline, etc.`,
+        },
+    ],
+    system: `
 ## Instructions
 Generate a page based on user requirements.
 
@@ -52,11 +53,11 @@ Generate a page based on user requirements.
 ## Datasource rules
 - For any RTE field use HTML (markdown is not supported).
         `,
-  schema: finalSchema,
+    schema: finalSchema,
 });
 
 for await (const part of stream.textStream) {
-  process.stdout.write(part);
+    process.stdout.write(part);
 }
 
 const finalObject = await stream.object;

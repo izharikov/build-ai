@@ -19,6 +19,11 @@
       "types": "./dist/components/index.d.ts",
       "import": "./dist/components/index.js",
       "require": "./dist/components/index.cjs"
+    },
+    "./processors": {
+      "types": "./dist/processors/index.d.ts",
+      "import": "./dist/processors/index.js",
+      "require": "./dist/processors/index.cjs"
     }
   },
   "scripts": {
