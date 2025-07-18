@@ -40,7 +40,8 @@
   "dependencies": {
     "@ai-sdk/openai": "2.0.0-alpha.15",
     "ai": "5.0.0-alpha.15",
-    "find-config": "^1.0.0"
+    "find-config": "^1.0.0",
+    "winston": "^3.17.0"
   },
   "devDependencies": {
     "@types/find-config": "^1.0.4",

@@ -8,7 +8,7 @@ import {
 import { openai } from '@ai-sdk/openai';
 import z from 'zod/v4';
 import { pageStructureSchema } from './helpers/schema-generator';
-import { customConvertMessages, objectSchema } from './lib/ai';
+import { customConvertMessages, getPrompt, objectSchema } from './lib/ai';
 import { ComponentsProvider } from './components';
 import { Storage } from './storage';
 import { LayoutContext, PageResult } from './processors/sitecore/types';
@@ -16,18 +16,22 @@ import { ResultProcessor } from './processors';
 
 const model = openai('gpt-4.1-nano');
 
-export type ChatContext = {
-    messages: UIMessage[];
-    // TODO: add model config
+export type Prompts = {
+    chooseStep: {
+        system: string;
+    };
+    generatePage: {
+        system: string;
+    };
+    globalContext?: string;
 };
 
-function chooseStep(chat: ChatContext, messages: ModelMessage[]) {
-    return streamObject({
-        model,
-        messages,
+export const defaultPrompts: Prompts = {
+    chooseStep: {
         system: `
-## Instructions
-Based on conversation, choose the best step to take next.
+Your task is to choose the best step to take next based on conversation.
+You are very first and important part of the system, the final goal is to generate the page.
+
 Choose 'generate' step if ALL the following:
 - context of the page is clear
 - all components and their place in the page are known
@@ -36,6 +40,39 @@ Choose 'generate' step if ALL the following:
 
 If any of the above is not true, choose 'refine' step.
         `,
+    },
+    generatePage: {
+        system: `
+## Instructions
+Generate a page based on user requirements.
+
+## Components rules
+- Always start with Container component in the main content area. And then place row/column components to style and organize the page.
+- Try to use 'Rich Text' component as minimum as possible (only when it's absolutely necessary, e.g. for code blocks).
+
+## Datasource rules
+- For any RTE field use HTML (markdown is not supported).
+
+## Page structure rules
+- Generate the page with minimum 7 components with datasources, if not specified.
+
+{{globalContext}}
+
+{{timeContext}}
+        `,
+    },
+};
+
+export type ChatContext = {
+    messages: UIMessage[];
+    prompts: Prompts;
+};
+
+function chooseStep(chat: ChatContext, messages: ModelMessage[]) {
+    return streamObject({
+        model,
+        messages,
+        system: getPrompt(chat.prompts.chooseStep.system, chat.prompts),
         schema: z.object({
             step: z.union([
                 z
@@ -58,8 +95,32 @@ If any of the above is not true, choose 'refine' step.
     });
 }
 
+export type ChooseStepResponse = Awaited<
+    ReturnType<typeof chooseStep>['object']
+>;
+
 type SchemaType<T extends Record<string, unknown>> = ReturnType<
     typeof objectSchema<T>
+>;
+
+type PageStructureSchema = ReturnType<typeof pageStructureSchema>;
+
+function pageStream(
+    chat: ChatContext,
+    messages: ModelMessage[],
+    schema: PageStructureSchema['schema'],
+    registry: PageStructureSchema['registry'],
+) {
+    return streamObject({
+        model,
+        messages,
+        system: getPrompt(chat.prompts.generatePage.system, chat.prompts),
+        schema: objectSchema(schema, registry),
+    });
+}
+
+export type PageResponseStream = Awaited<
+    ReturnType<typeof pageStream>['object']
 >;
 
 export const generatePage = async (
@@ -108,33 +169,17 @@ export const generatePage = async (
 
     // now we have the high level structure, we can generate the page
 
-    const stream = streamObject({
-        model,
-        messages,
-        system: `
-## Instructions
-Generate a page based on user requirements.
-
-## Components rules
-- Always start with Container component in the main content area. And then place row/column components to style and organize the page.
-- Try to use 'Rich Text' component as minimum as possible (only when it's absolutely necessary, e.g. for code blocks).
-
-## Datasource rules
-- For any RTE field use HTML (markdown is not supported).
-
-## Page structure rules
-- Generate the page with minimum 7 components with datasources, if not specified.
-        `,
-        schema: objectSchema(schema, registry),
-    });
-
+    const stream = pageStream(chat, messages, schema, registry);
     await writeObjectStream('page', stream);
     const page = await stream.object;
     await storage.save('page', page);
 
     await resultProcessor.process(
         {
-            name: page.url,
+            name: page.path
+                .replaceAll('/', '')
+                .replace(/[^a-zA-Z0-9_]/g, '-')
+                .toLowerCase(),
             ...page,
             main: page.main as PageResult['main'],
         },
@@ -165,8 +210,8 @@ export const streamPage = (
             );
         },
         onError: (error) => {
-            console.log('Error:', error);
-            return 'ERROR occurred while generating the page.';
+            const { message } = error as Error;
+            return message || 'An error occurred while processing the page.';
         },
     });
 };

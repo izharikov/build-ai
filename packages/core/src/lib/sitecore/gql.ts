@@ -1,3 +1,5 @@
+import { logger } from '../logging';
+
 export type SitecoreConnection = {
     accessToken: string;
     baseUrl: string;
@@ -9,11 +11,16 @@ export type GqlResponse<T> = {
 
 export type GqlArrayResponse<T> = GqlResponse<T[]>;
 
+let increment = 0;
+
 export async function graphql<T>(
     query: string,
     connection: SitecoreConnection,
     variables?: Record<string, unknown>,
 ): Promise<T> {
+    const id = increment++;
+    logger.info(`[${id}] Executing GraphQL query: ${query}`);
+    logger.debug(`[${id}] GraphQL variables: ${JSON.stringify(variables)}`);
     return await fetch(
         `${connection.baseUrl}sitecore/api/authoring/graphql/v1`,
         {
@@ -27,7 +34,11 @@ export async function graphql<T>(
                 variables,
             }),
         },
-    ).then((res) => res.json() as T);
+    ).then((res) => {
+        const data = res.json() as T;
+        logger.debug(`[${id}] GraphQL response: ${JSON.stringify(data)}`);
+        return data;
+    });
 }
 
 export type GqlRendering = {

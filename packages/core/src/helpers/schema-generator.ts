@@ -156,7 +156,9 @@ export function pageStructureSchema(
 
     const schema = z
         .object({
-            url: z.string().describe("page url part, use '-' for spaces"),
+            path: z
+                .string()
+                .describe("page path - url part, use '-' for spaces"),
             title: z.string().describe('Page title'),
             description: z.string().describe('Page description'),
             main: z

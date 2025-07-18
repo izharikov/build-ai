@@ -4,7 +4,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "tsx builder.tsx"
+    "dev": "tsx ./src/index.tsx"
   },
   "keywords": [],
   "author": "",

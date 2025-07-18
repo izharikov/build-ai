@@ -7,6 +7,7 @@ import {
 } from 'ai';
 import { JSONSchemaMeta } from 'zod/v4/core';
 import { z } from 'zod/v4';
+import { Prompts } from '..';
 
 export type ZodObject = ReturnType<typeof z.object>;
 export type ZodObjectT<T extends Record<string, unknown>> = ReturnType<
@@ -55,4 +56,13 @@ export function customConvertMessages(messages: UIMessage[]) {
         }));
         return [...res, ...dataMessages];
     });
+}
+
+export function getPrompt(promtp: string, config: Prompts) {
+    return promtp
+        .replace(/{{globalContext}}/g, config.globalContext ?? '')
+        .replace(
+            /{{timeContext}}/g,
+            `Current date and time: ${new Date().toISOString()}`,
+        );
 }
