@@ -1,19 +1,20 @@
 import { Component } from '../../components';
 
-export type PageComponent = {
+export type LayoutComponent = {
     name: string;
     datasource?: {
         name: string;
         fields: Record<string, string | undefined>;
     };
-    children: Record<string, PageComponent[]>;
+    children: Record<string, LayoutComponent[]>;
 };
 
-export type PageResult = {
-    name: string; // TODO: add name
+export type LayoutResult = {
+    name: string;
     title: string;
     description: string;
-    main: PageComponent[];
+    main: LayoutComponent[];
+    state: 'new' | 'saved';
 };
 
 export type DatasourceItem = {
@@ -24,7 +25,7 @@ export type DatasourceItem = {
     fields: Record<string, string | undefined>;
 };
 
-export type LayoutContext = {
+export type GeneratedLayoutContext = {
     layout: {
         deviceId?: string;
         raw: (mailPlaceholder?: string) => string;

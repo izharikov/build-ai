@@ -1,31 +1,27 @@
 import React, { useState } from 'react';
 import { render, Box, Text } from 'ink';
-import { Spinner, Alert } from '@inkjs/ui';
+import { Alert } from '@inkjs/ui';
 import dotenv from 'dotenv';
-import { useChat } from '@ai-sdk/react';
 import { StreamChatTransport } from './lib/StreamChatTransport';
 
 import findConfig from 'find-config';
 
-import { sitecorePageStream } from './config';
-import { InputMessage, Message } from './components/message';
+import { sitecorePageStream, loadPrompts, storage } from './config';
+import { Menu } from './components/steps/Menu';
+import Step from './components/steps/Step';
+import { Chat } from './components/chat';
+import { ListPages } from './components/list-pages';
 
 dotenv.config({ path: findConfig('.env') ?? undefined });
 
-const transport = new StreamChatTransport(sitecorePageStream);
+const promts = await loadPrompts();
+const transport = new StreamChatTransport(sitecorePageStream(promts));
 
-const PageBuilder = () => {
+const App = () => {
+    const [menuOption, setMenuOption] = useState<
+        'menu' | 'new' | 'list' | 'help'
+    >('menu');
     const [error, setError] = useState<string>();
-
-    const { messages, sendMessage, status } = useChat({
-        transport,
-        onError: (error) => {
-            console.error('Error:', error);
-            setError(error.message);
-        },
-    });
-
-    const showSpinner = status !== 'ready' && status !== 'error';
 
     return (
         <Box flexDirection="column" padding={1}>
@@ -33,19 +29,19 @@ const PageBuilder = () => {
                 <Text color="cyanBright">Page Builder CLI</Text>
             </Box>
             <Box>{error && <Alert variant="error">{error}</Alert>}</Box>
-            {messages.map((message) => (
-                <Message key={message.id} message={message} />
-            ))}
-            <Box>{showSpinner && <Spinner label={status} />}</Box>
-            {status === 'ready' && <InputMessage sendMessage={sendMessage} />}
-            {status === 'error' && (
-                <InputMessage
-                    sendMessage={() => {}}
-                    placeholder="Error occurred. Please try again."
-                />
+            {menuOption === 'menu' && <Menu setOption={setMenuOption} />}
+            {menuOption === 'new' && (
+                <Step onBack={() => setMenuOption('menu')}>
+                    <Chat transport={transport} setError={setError} />
+                </Step>
+            )}
+            {menuOption === 'list' && (
+                <Step onBack={() => setMenuOption('menu')}>
+                    <ListPages storage={storage} setError={setError} />
+                </Step>
             )}
         </Box>
     );
 };
 
-render(<PageBuilder />);
+render(<App />);

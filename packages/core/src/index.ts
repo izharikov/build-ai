@@ -7,11 +7,14 @@ import {
 } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import z from 'zod/v4';
-import { pageStructureSchema } from './helpers/schema-generator';
+import { layoutStructureSchema } from './helpers/schema-generator';
 import { customConvertMessages, getPrompt, objectSchema } from './lib/ai';
 import { ComponentsProvider } from './components';
 import { Storage } from './storage';
-import { LayoutContext, PageResult } from './processors/sitecore/types';
+import {
+    GeneratedLayoutContext,
+    LayoutResult,
+} from './processors/sitecore/types';
 import { ResultProcessor } from './processors';
 
 const model = openai('gpt-4.1-nano');
@@ -20,7 +23,7 @@ export type Prompts = {
     chooseStep: {
         system: string;
     };
-    generatePage: {
+    generateLayout: {
         system: string;
     };
     globalContext?: string;
@@ -32,16 +35,10 @@ export const defaultPrompts: Prompts = {
 Your task is to choose the best step to take next based on conversation.
 You are very first and important part of the system, the final goal is to generate the page.
 
-Choose 'generate' step if ALL the following:
-- context of the page is clear
-- all components and their place in the page are known
-- the overall structure of the page is clear
-- the overview is confirmed with the user
-
-If any of the above is not true, choose 'refine' step.
+ALSWAYS CHOOSE 'generate' step.
         `,
     },
-    generatePage: {
+    generateLayout: {
         system: `
 ## Instructions
 Generate a page based on user requirements.
@@ -103,32 +100,31 @@ type SchemaType<T extends Record<string, unknown>> = ReturnType<
     typeof objectSchema<T>
 >;
 
-type PageStructureSchema = ReturnType<typeof pageStructureSchema>;
+type LayoutStructureSchema = ReturnType<typeof layoutStructureSchema>;
 
-function pageStream(
+function layoutStream(
     chat: ChatContext,
     messages: ModelMessage[],
-    schema: PageStructureSchema['schema'],
-    registry: PageStructureSchema['registry'],
+    schema: LayoutStructureSchema['schema'],
+    registry: LayoutStructureSchema['registry'],
 ) {
     return streamObject({
         model,
         messages,
-        system: getPrompt(chat.prompts.generatePage.system, chat.prompts),
+        system: getPrompt(chat.prompts.generateLayout.system, chat.prompts),
         schema: objectSchema(schema, registry),
     });
 }
 
-export type PageResponseStream = Awaited<
-    ReturnType<typeof pageStream>['object']
+export type LayoutResponseStream = Awaited<
+    ReturnType<typeof layoutStream>['object']
 >;
 
-export const generatePage = async (
+export const generateLayout = async (
     chat: ChatContext,
     writer: UIMessageStreamWriter,
     componentsProvider: ComponentsProvider,
     storage: Storage<unknown>,
-    resultProcessor: ResultProcessor<PageResult, LayoutContext>,
 ) => {
     const messages = customConvertMessages(chat.messages);
 
@@ -163,25 +159,32 @@ export const generatePage = async (
         return;
     }
 
-    const { schema, registry } = pageStructureSchema(
+    const { schema, registry } = layoutStructureSchema(
         await componentsProvider.getComponents(),
     );
 
-    // now we have the high level structure, we can generate the page
+    // now we have the high level structure, we can generate the layout
 
-    const stream = pageStream(chat, messages, schema, registry);
-    await writeObjectStream('page', stream);
-    const page = await stream.object;
-    await storage.save('page', page);
+    const stream = layoutStream(chat, messages, schema, registry);
+    await writeObjectStream('layout', stream);
+    const layout = await stream.object;
+    await storage.save('layout', layout);
+};
 
+export const processAndSaveLayout = async (
+    layout: LayoutResponseStream,
+    resultProcessor: ResultProcessor<LayoutResult, GeneratedLayoutContext>,
+    componentsProvider: ComponentsProvider,
+) =>
     await resultProcessor.process(
         {
-            name: page.path
+            name: layout.path
                 .replaceAll('/', '')
                 .replace(/[^a-zA-Z0-9_]/g, '-')
                 .toLowerCase(),
-            ...page,
-            main: page.main as PageResult['main'],
+            ...layout,
+            state: 'new',
+            main: layout.main as LayoutResult['main'],
         },
         {
             layout: {
@@ -191,27 +194,21 @@ export const generatePage = async (
             components: await componentsProvider.getComponents(),
         },
     );
-};
 
-export const streamPage = (
+export const streamGenerateLayout = (
     chat: ChatContext,
     componentsProvider: ComponentsProvider,
     storage: Storage<unknown>,
-    resultProcessor: ResultProcessor<PageResult, LayoutContext>,
 ) => {
     return createUIMessageStream({
         execute: async ({ writer }) => {
-            await generatePage(
-                chat,
-                writer,
-                componentsProvider,
-                storage,
-                resultProcessor,
-            );
+            await generateLayout(chat, writer, componentsProvider, storage);
         },
         onError: (error) => {
             const { message } = error as Error;
-            return message || 'An error occurred while processing the page.';
+            return message || 'An error occurred while processing the layout.';
         },
     });
 };
+
+export * from './util';

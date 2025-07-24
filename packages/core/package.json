@@ -41,7 +41,8 @@
     "@ai-sdk/openai": "2.0.0-alpha.15",
     "ai": "5.0.0-alpha.15",
     "find-config": "^1.0.0",
-    "winston": "^3.17.0"
+    "winston": "^3.17.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/find-config": "^1.0.4",
@@ -49,6 +50,7 @@
     "dotenv": "^16.5.0",
     "rimraf": "^6.0.1",
     "tsup": "^8.5.0",
-    "tsx": "^4.20.3"
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
   }
 }

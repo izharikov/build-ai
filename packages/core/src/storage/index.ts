@@ -3,11 +3,23 @@ import path from 'path';
 
 export interface Storage<T> {
     get(key: string): Promise<T | undefined>;
+    getAll(): Promise<((T & { id: string }) | undefined)[]>;
     save(key: string, value: T): Promise<void>;
 }
 
 export class FileStorage<T> implements Storage<T> {
     constructor(private readonly folders: string[]) {}
+    async getAll(): Promise<((T & { id: string }) | undefined)[]> {
+        const files = await fs.readdir(path.join(...this.folders));
+        return await Promise.all(
+            files.map((file) => {
+                const id = file.replace('.json', '');
+                return this.get(id).then((data) =>
+                    data ? { id, ...data } : undefined,
+                );
+            }),
+        );
+    }
 
     async get(key: string): Promise<T | undefined> {
         const filePath = this.getFilePath(key);

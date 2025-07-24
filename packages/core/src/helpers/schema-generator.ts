@@ -140,7 +140,7 @@ function populateSchema(
     }
 }
 
-export function pageStructureSchema(
+export function layoutStructureSchema(
     components: Component[],
     mainPlaceholder: string = '__main__',
 ) {
@@ -158,9 +158,9 @@ export function pageStructureSchema(
         .object({
             path: z
                 .string()
-                .describe("page path - url part, use '-' for spaces"),
-            title: z.string().describe('Page title'),
-            description: z.string().describe('Page description'),
+                .describe("item path - url part, use '-' for spaces"),
+            title: z.string().describe('Title'),
+            description: z.string().describe('Description'),
             main: z
                 .array(
                     z.union(
@@ -173,10 +173,10 @@ export function pageStructureSchema(
                             .map((c) => getExistingScema(repo, c)),
                     ),
                 )
-                .describe('Page components'),
+                .describe('Layout components'),
         })
         .register(registry, {
-            id: 'PageStructure',
+            id: 'LayoutStructure',
         });
 
     for (const component of components) {

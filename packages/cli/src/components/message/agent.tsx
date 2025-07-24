@@ -1,30 +1,49 @@
 import { UIMessage } from 'ai';
-import { Box, Text } from 'ink';
+import { Box, Spacer, Text } from 'ink';
 import { useMessageData } from '@/lib/react/useMessageData';
 
 import { ChooseStepResponse, PageResponseStream } from '@page-builder/core';
+import { Spinner } from '@inkjs/ui';
+import { useEffect } from 'react';
 
-export function AgentMessage({ message }: { message: UIMessage }) {
-    const step = useMessageData<ChooseStepResponse>(message, 'step');
-    const page = useMessageData<PageResponseStream>(message, 'page');
+export function AgentMessage({
+    message,
+    setFlowState,
+}: {
+    message: UIMessage;
+    setFlowState?: (state: string) => void;
+}) {
+    const { data: step } = useMessageData<ChooseStepResponse>(message, 'step');
+    const { data: page, state } = useMessageData<PageResponseStream>(
+        message,
+        'page',
+    );
+
+    useEffect(() => {
+        if (step?.step && setFlowState) {
+            setFlowState(step.step);
+        }
+    }, [step, setFlowState]);
 
     return (
         <>
-            {/* <Text color="grey">
-                {'Debug:'} {JSON.stringify({ message, step, page })}
-            </Text> */}
             {step?.step === 'refine' && (
                 <Text color="blue">
                     {`A: `} {step.question}
                 </Text>
             )}
             {step?.step === 'generate' && (
-                <>
-                    <Text color="blue">{`A: Page is generated`}</Text>
-                    <Box>
-                        <Text>{JSON.stringify(page)}</Text>
-                    </Box>
-                </>
+                <Box flexDirection="column" minHeight={13}>
+                    {(state === 'loading' || state === 'streaming') && (
+                        <Spinner label="Generating page..." />
+                    )}
+                    {state === 'done' && (
+                        <Text color="green">Page generated successfully!</Text>
+                    )}
+                    <Spacer />
+                    {/** TODO: render page preview */}
+                    {/* <Text>{JSON.stringify(page, null, 2)}</Text> */}
+                </Box>
             )}
         </>
     );

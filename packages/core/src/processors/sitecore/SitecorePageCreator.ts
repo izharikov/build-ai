@@ -5,15 +5,15 @@ import {
     updateItem,
 } from '@/lib/sitecore/gql';
 import { ResultProcessor } from '..';
-import { PageResult, LayoutContext } from './types';
+import { LayoutResult, GeneratedLayoutContext } from './types';
 import { PagesConfiguration } from '@/lib/sitecore/page';
 import { formatGuid } from '@/lib';
 
 type Fields = { fields: Record<string, string | undefined> };
 
 export class SitecorePageCreator<
-    TResult extends PageResult,
-    TContext extends LayoutContext,
+    TResult extends LayoutResult,
+    TContext extends GeneratedLayoutContext,
 > implements ResultProcessor<TResult, TContext>
 {
     private readonly connection: SitecoreConnection;
@@ -97,7 +97,7 @@ export class SitecorePageCreator<
         );
     }
 
-    async createPage<TResult extends PageResult>(result: TResult) {
+    async createPage<TResult extends LayoutResult>(result: TResult) {
         const response = await createItem(
             {
                 name: result.name,

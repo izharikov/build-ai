@@ -4,7 +4,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "tsx ./src/index.tsx"
+    "dev": "cross-env DEV=true tsx ./src/index.tsx"
   },
   "keywords": [],
   "author": "",
@@ -24,6 +24,8 @@
     "@types/find-config": "^1.0.4",
     "@types/node": "^24.0.8",
     "@types/react": "^19.1.8",
+    "cross-env": "^7.0.3",
+    "react-devtools-core": "^6.1.5",
     "tsx": "^4.20.3"
   }
 }

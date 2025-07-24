@@ -1,6 +1,6 @@
 import { ResultProcessor } from '..';
 import { PLACEHOLDER_SEPARATOR } from '../../helpers/constants';
-import { PageResult, LayoutContext, DatasourceItem } from './types';
+import { LayoutResult, GeneratedLayoutContext, DatasourceItem } from './types';
 import { randomUUID } from 'crypto';
 
 type Rendering = {
@@ -40,8 +40,8 @@ function xmlTag(
 }
 
 export class SitecorePageToLayoutProcessor<
-    TResult extends PageResult,
-    TContext extends LayoutContext,
+    TResult extends LayoutResult,
+    TContext extends GeneratedLayoutContext,
 > implements ResultProcessor<TResult, TContext>
 {
     process(page: TResult, context: TContext): Promise<void> {
