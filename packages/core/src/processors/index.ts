@@ -13,11 +13,7 @@ export class ChainProcessor<TResult, TContext>
 
     async process(result: TResult, context: TContext) {
         for (const processor of this.processors) {
-            try {
-                await processor.process(result, context);
-            } catch (e) {
-                console.error('Error while processing result', e);
-            }
+            await processor.process(result, context);
         }
     }
 }

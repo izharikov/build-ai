@@ -1,10 +1,10 @@
 import { useChat } from '@ai-sdk/react';
 import { ChooseStepResponse } from '@page-builder/core';
 import { InputMessage, Message } from './message';
-import { Box, Text } from 'ink';
 import { ChatTransport, UIMessage } from 'ai';
-import { useState } from 'react';
-import { Spinner } from '@inkjs/ui';
+import { getData } from '@/lib/react/useMessageData';
+import React from 'react';
+import { AgentMessage } from './message/agent';
 
 export function Chat<UI_MESSAGE extends UIMessage>({
     transport,
@@ -28,54 +28,81 @@ export function Chat<UI_MESSAGE extends UIMessage>({
         },
     });
 
-    const [flowState, setFlowState] = useState<ChooseStepResponse['step']>();
+    const computedFlowState = getData<ChooseStepResponse>(
+        messages.findLast((x) => x.role === 'assistant'),
+        'step',
+    );
 
-    const showSpinner = chatStatus !== 'ready' && chatStatus !== 'error';
+    const commands =
+        computedFlowState?.step === 'generate'
+            ? [
+                  {
+                      name: 'save',
+                      description: 'Save the page',
+                      confirmation: true,
+                  },
+                  {
+                      name: 'ui_expand',
+                      description: 'Expand the layout',
+                  },
+              ]
+            : [
+                  {
+                      name: 'save',
+                      description: 'Save the page',
+                      confirmation: true,
+                  },
+              ];
 
     return (
         <>
-            {messages.map((message) => (
-                <Message
-                    key={message.id}
-                    message={message}
-                    setFlowState={(s) =>
-                        setFlowState(s as ChooseStepResponse['step'])
-                    }
+            {messages.map((message, index) => {
+                const uiCommand =
+                    message.role === 'user' &&
+                    message.parts[0].type === 'text' &&
+                    message.parts[0].text.startsWith('/ui_');
+                const command = uiCommand
+                    ? (message.parts[0] as { text: string }).text.substring(4)
+                    : '';
+                const lastPageMsg = uiCommand
+                    ? messages.findLast(
+                          (x, i) =>
+                              x.role === 'assistant' &&
+                              i < index &&
+                              x.parts.some((y) => y.type === 'data-layout'),
+                      )
+                    : undefined;
+                return (
+                    <React.Fragment key={message.id}>
+                        <Message message={message} />
+                        {uiCommand && (
+                            <>
+                                {command === 'expand' && lastPageMsg && (
+                                    <AgentMessage
+                                        message={lastPageMsg}
+                                        layoutMode="full"
+                                    />
+                                )}
+                            </>
+                        )}
+                        {/* needs to be here to rerender after messages changed */}
+                        {index === messages.length - 1 &&
+                            chatStatus === 'ready' && (
+                                <InputMessage
+                                    sendMessage={sendMessage}
+                                    placeholder="Type your message here... (or / to choose command)"
+                                    commands={commands}
+                                />
+                            )}
+                    </React.Fragment>
+                );
+            })}
+            {messages.length === 0 && chatStatus === 'ready' && (
+                <InputMessage
+                    sendMessage={sendMessage}
+                    placeholder="Type your message here... (or / to choose command)"
+                    commands={commands}
                 />
-            ))}
-            <Box>{showSpinner && <Spinner label={chatStatus} />}</Box>
-            {chatStatus === 'ready' && (
-                <>
-                    {flowState !== 'generate' && (
-                        <InputMessage sendMessage={sendMessage} />
-                    )}
-                    {flowState === 'generate' && (
-                        <>
-                            <Text color="green">
-                                Page generated successfully!
-                            </Text>
-                            <InputMessage
-                                sendMessage={() => {}}
-                                placeholder="type / to choose command"
-                                commands={[
-                                    {
-                                        name: 'edit',
-                                        description: 'Edit the page',
-                                    },
-                                    {
-                                        name: 'save',
-                                        description: 'Save the page',
-                                    },
-                                    {
-                                        name: 'exit',
-                                        description: 'Exit',
-                                        confirmation: true,
-                                    },
-                                ]}
-                            />
-                        </>
-                    )}
-                </>
             )}
             {chatStatus === 'error' && (
                 <InputMessage

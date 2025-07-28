@@ -29,6 +29,14 @@ export type Prompts = {
     globalContext?: string;
 };
 
+export type CommandState = {
+    command: string;
+    state: 'loading' | 'done';
+    success: boolean;
+    message?: string;
+    result?: string;
+};
+
 export const defaultPrompts: Prompts = {
     chooseStep: {
         system: `
@@ -120,18 +128,76 @@ export type LayoutResponseStream = Awaited<
     ReturnType<typeof layoutStream>['object']
 >;
 
+function getCommand(message: UIMessage) {
+    if (
+        message.role === 'user' &&
+        message.parts.length === 1 &&
+        message.parts[0].type === 'text' &&
+        message.parts[0].text.startsWith('/')
+    ) {
+        return message.parts[0].text.substring(1);
+    }
+}
+
+function getLastDataStream<T>(
+    messages: UIMessage[],
+    type: StateTypes,
+): T | undefined {
+    for (let i = messages.length - 1; i >= 0; i--) {
+        const message = messages[i];
+        if (message.role === 'assistant') {
+            const part = message.parts.find(
+                (part) => part.type === `data-${type}`,
+            );
+            if (part && 'data' in part) {
+                return (part.data as { data: T }).data;
+            }
+        }
+    }
+}
+
+async function fetchDataFromStorage(
+    message: UIMessage | undefined,
+    storage: Storage<unknown>,
+    type: StateTypes,
+) {
+    if (message?.role !== 'assistant' || message.parts.length > 1) {
+        return;
+    }
+    const layoutId = getLastDataStream<string>([message], 'fetch');
+    if (!layoutId) {
+        return;
+    }
+    const layout = await storage.get(layoutId);
+    message.parts.push({
+        type: `data-${type}`,
+        id: type,
+        data: layout,
+    });
+}
+
+export type StateTypes = 'command' | 'step' | 'layout' | 'fetch';
+
 export const generateLayout = async (
     chat: ChatContext,
     writer: UIMessageStreamWriter,
     componentsProvider: ComponentsProvider,
     storage: Storage<unknown>,
+    resultProcessor: ResultProcessor<LayoutResult, GeneratedLayoutContext>,
 ) => {
+    const lastUserMessage = chat.messages.findLast((x) => x.role === 'user');
+    const lastAssistantMessage = chat.messages.findLast(
+        (x) => x.role === 'assistant',
+    );
+    await fetchDataFromStorage(lastAssistantMessage, storage, 'layout');
+
     const messages = customConvertMessages(chat.messages);
 
-    function state(type: string, data?: unknown) {
+    function state(type: StateTypes, data?: unknown) {
         if (!type) {
             return;
         }
+        // console.log('state', type, JSON.stringify(data));
         writer.write({
             type: `data-${type}`,
             id: type,
@@ -142,7 +208,7 @@ export const generateLayout = async (
     async function writeObjectStream<
         K extends Record<string, unknown>,
         T extends SchemaType<K>,
-    >(type: string, stream: ReturnType<typeof streamObject<T>>) {
+    >(type: StateTypes, stream: ReturnType<typeof streamObject<T>>) {
         state(type, { state: 'loading' });
         for await (const part of stream.partialObjectStream) {
             state(type, { state: 'streaming', data: part });
@@ -150,6 +216,58 @@ export const generateLayout = async (
         const result = await stream.object;
         state(type, { state: 'done', data: result });
         return result;
+    }
+
+    // command handler
+    const command = lastUserMessage && getCommand(lastUserMessage);
+    if (command && command.startsWith('ui_')) {
+        return;
+    }
+    if (command === 'save') {
+        const layout = getLastDataStream<LayoutResponseStream>(
+            chat.messages,
+            'layout',
+        );
+        if (!layout) {
+            state('command', {
+                state: 'done',
+                data: {
+                    command: '/save',
+                    success: false,
+                    message: 'Layout not found',
+                },
+            });
+            return;
+        }
+        state('command', { command: '/save', state: 'loading' });
+        try {
+            // TODO: add steps + result
+            await processAndSaveLayout(
+                layout,
+                resultProcessor,
+                componentsProvider,
+            );
+        } catch (e) {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            state('command', {
+                state: 'done',
+                data: {
+                    command: '/save',
+                    success: false,
+                    message: (e as Error).message ?? 'An error occurred',
+                },
+            });
+            return;
+        }
+        state('command', {
+            state: 'done',
+            data: {
+                command: '/save',
+                success: true,
+                result: 'Layout saved' /*TODO: add e.g. item id, path */,
+            },
+        });
+        return;
     }
 
     const step = await writeObjectStream('step', chooseStep(chat, messages));
@@ -199,10 +317,17 @@ export const streamGenerateLayout = (
     chat: ChatContext,
     componentsProvider: ComponentsProvider,
     storage: Storage<unknown>,
+    resultProcessor: ResultProcessor<LayoutResult, GeneratedLayoutContext>,
 ) => {
     return createUIMessageStream({
         execute: async ({ writer }) => {
-            await generateLayout(chat, writer, componentsProvider, storage);
+            await generateLayout(
+                chat,
+                writer,
+                componentsProvider,
+                storage,
+                resultProcessor,
+            );
         },
         onError: (error) => {
             const { message } = error as Error;

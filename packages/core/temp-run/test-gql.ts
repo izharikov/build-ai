@@ -1,7 +1,10 @@
 import dotenv from 'dotenv';
 import { SitecoreGraphqlAuthoringComponentsProvider } from '../src/components/sitecore/SitecoreGraphqlAuthoringComponentsProvider';
 import findConfig from 'find-config';
-import { LayoutContext, PageResult } from '../src/processors/sitecore/types';
+import {
+    GeneratedLayoutContext,
+    LayoutResult,
+} from '../src/processors/sitecore/types';
 import { FileStorage } from '../src/storage';
 import { CachedComponentsProvider } from '../src/components';
 import {
@@ -20,16 +23,19 @@ const provider = new SitecoreGraphqlAuthoringComponentsProvider(
     process.env.SITECORE_SITE!,
 );
 
-const resultProcessor = new ChainProcessor<PageResult, LayoutContext>([
-    new SitecorePageToLayoutProcessor<PageResult, LayoutContext>(),
-    new SitecorePageCreator<PageResult, LayoutContext>(
+const resultProcessor = new ChainProcessor<
+    LayoutResult,
+    GeneratedLayoutContext
+>([
+    new SitecorePageToLayoutProcessor<LayoutResult, GeneratedLayoutContext>(),
+    new SitecorePageCreator<LayoutResult, GeneratedLayoutContext>(
         {
             accessToken: process.env.SITECORE_GRAPHQL_ACCESS_TOKEN!,
             baseUrl: process.env.SITECORE_GRAPHQL_BASE_URL!,
         },
         {
             pageTemplateId: '{95CB88E7-8068-4A9C-9EEB-05F9A22C49D4}',
-            dateFolderTemplateId: '{1C82E550-EBCD-4E5D-8ABD-D50D0809541E}',
+            dataFolderTemplateId: '{1C82E550-EBCD-4E5D-8ABD-D50D0809541E}',
             parentItemId: '{93091B69-996A-4564-A477-8D44A6684F5A}',
             mainPlaceholder: '/headless-main/sxa-main/container-1',
         },
@@ -44,7 +50,7 @@ const componentsProvider = new CachedComponentsProvider(
     true,
 );
 
-const context: LayoutContext = {
+const context: GeneratedLayoutContext = {
     layout: {
         raw: () => '',
         datasources: [],
@@ -52,7 +58,7 @@ const context: LayoutContext = {
     components: await componentsProvider.getComponents(),
 };
 
-await resultProcessor.process(page as PageResult, context);
+await resultProcessor.process(page as LayoutResult, context);
 
 console.log('Datasources', JSON.stringify(context.layout.datasources, null, 2));
 console.log('Created', context.layout.raw());

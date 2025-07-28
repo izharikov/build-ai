@@ -6,8 +6,8 @@ export function UserMessage({ message }: { message: UIMessage }) {
         .map((part) => part.type === 'text' && part.text)
         .join('');
     return (
-        <Text color="grey">
-            {`U: `} {text}
+        <Text>
+            {`U [${message.id}]: `} {text}
         </Text>
     );
 }

@@ -19,7 +19,7 @@ export function Menu({
 
     return (
         <>
-            <Box padding={2} flexDirection="column" gap={1} height={10}>
+            <Box flexDirection="column" gap={1} height={10}>
                 <Select
                     options={[
                         {

@@ -1,6 +1,6 @@
 export type PagesConfiguration = {
     pageTemplateId: string;
-    dateFolderTemplateId: string;
+    dataFolderTemplateId: string;
     parentItemId: string;
     mainPlaceholder: string;
 };

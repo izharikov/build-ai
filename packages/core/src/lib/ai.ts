@@ -3,6 +3,7 @@ import {
     DataUIPart,
     jsonSchema,
     JSONSchema7,
+    ModelMessage,
     UIMessage,
 } from 'ai';
 import { JSONSchemaMeta } from 'zod/v4/core';
@@ -40,7 +41,7 @@ export function objectSchema<T extends Record<string, unknown>>(
     );
 }
 
-export function customConvertMessages(messages: UIMessage[]) {
+export function customConvertMessages(messages: UIMessage[]): ModelMessage[] {
     return messages.flatMap((message) => {
         const res = convertToModelMessages([message]);
         if (message.role !== 'assistant') {

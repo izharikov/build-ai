@@ -4,6 +4,8 @@ import { LayoutResult } from '@page-builder/core/processors';
 import { Storage } from '@page-builder/core/storage';
 import { useState } from 'react';
 import { LayoutPreview } from './message/layout-preview';
+import { Chat } from './chat';
+import { ChatTransport, UIMessage } from 'ai';
 
 function LoadingSpinner({
     loading,
@@ -18,9 +20,11 @@ function LoadingSpinner({
 export function ListPages({
     storage,
     setError,
+    transport,
 }: {
     storage: Storage<LayoutResult>;
     setError: (error: string) => void;
+    transport: ChatTransport<UIMessage>;
 }) {
     const { data, loading } = useLoad(
         async () => {
@@ -36,7 +40,7 @@ export function ListPages({
             data
                 .filter((x) => x)
                 .map((x) => ({
-                    label: x!.title,
+                    label: `${x!.title} [${x!.id}]`,
                     value: x!.id || '',
                 }))) ||
         [];
@@ -53,6 +57,8 @@ export function ListPages({
         [pageId],
         setError,
     );
+
+    const [command, setCommand] = useState<{ name: string; args: string[] }>();
 
     return (
         <>
@@ -71,7 +77,33 @@ export function ListPages({
                     />
                     {layoutLoading === 'done' && layout && (
                         <>
-                            <LayoutPreview layout={layout} />
+                            <LayoutPreview
+                                layout={layout}
+                                id={pageId}
+                                onCommand={(name, args) =>
+                                    setCommand({ name, args })
+                                }
+                            />
+                            {command && command.name === 'chat' && (
+                                <Chat
+                                    transport={transport}
+                                    originalMessages={[
+                                        {
+                                            id: 'internal',
+                                            role: 'assistant',
+                                            parts: [
+                                                {
+                                                    type: 'data-fetch',
+                                                    data: {
+                                                        data: command.args[0],
+                                                    },
+                                                },
+                                            ],
+                                        },
+                                    ]}
+                                    setError={setError}
+                                />
+                            )}
                         </>
                     )}
                 </>

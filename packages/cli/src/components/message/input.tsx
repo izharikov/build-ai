@@ -5,7 +5,8 @@ import { useState } from 'react';
 type CommandOption = {
     name: string;
     description: string;
-    confirmation?: boolean;
+    confirmation?: boolean; // TODO: use confirmation in component
+    switch?: boolean;
 };
 
 const OPTION_WIDTH = 20;
@@ -28,36 +29,42 @@ export function InputMessage({
 }) {
     const [input, setInput] = useState('');
     const [commandSelected, setCommandSelected] = useState<boolean>(false);
+    const [inputEnabled, setInputEnabled] = useState(true);
     const showCommands = commands.length > 0 && input.startsWith('/');
     const enteredCommand = showCommands ? input.substring(1) : '';
     const filteredCommands = showCommands
         ? commands.filter((x) => x.name.startsWith(enteredCommand))
         : [];
 
-    const onSubmit = () => {
+    const onSubmit = (val: string) => {
+        if (!val || commandSelected) {
+            return;
+        }
         if (
             onCommand &&
             showCommands &&
-            input.startsWith('/') &&
-            filteredCommands.some((x) => x.name === enteredCommand)
+            val.startsWith('/') &&
+            filteredCommands.some((x) => x.name === val.substring(1))
         ) {
             // handle command
-            onCommand(enteredCommand);
+            onCommand(val.substring(1));
         } else if (sendMessage) {
-            sendMessage({ text: input });
+            sendMessage({ text: val });
         }
     };
     return (
         <Box flexDirection="column">
             <Box borderColor="white" borderStyle="round" paddingX={1}>
-                {!commandSelected && (
+                {inputEnabled && (
                     <TextInput
                         placeholder={placeholder}
-                        onSubmit={onSubmit}
+                        onSubmit={
+                            filteredCommands.length > 0 ? undefined : onSubmit
+                        }
                         onChange={setInput}
                     />
                 )}
-                {commandSelected && <Text>{input}</Text>}
+                {!inputEnabled && <Text>{input}</Text>}
             </Box>
             {commands.length > 0 && (
                 <Box minHeight={5}>
@@ -67,9 +74,20 @@ export function InputMessage({
                                 label: getLabel(x),
                                 value: x.name,
                             }))}
-                            onChange={(x) => {
+                            onChange={(cmd) => {
+                                const selectedCommand = filteredCommands.find(
+                                    (x) => x.name === cmd,
+                                );
+                                setInputEnabled(
+                                    selectedCommand?.switch ?? false,
+                                );
+                                console.log(
+                                    'inputEnabled',
+                                    selectedCommand?.switch ?? false,
+                                );
                                 setCommandSelected(true);
-                                setInput('/' + x);
+                                setInput('/' + cmd);
+                                onSubmit('/' + cmd);
                             }}
                             visibleOptionCount={3}
                         />

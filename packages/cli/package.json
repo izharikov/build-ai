@@ -1,10 +1,16 @@
 {
   "name": "@page-builder/cli",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
   "type": "module",
   "scripts": {
-    "dev": "cross-env DEV=true tsx ./src/index.tsx"
+    "dev": "cross-env DEV=true tsx ./src/index.tsx",
+    "build": "pnpm clean && tsup",
+    "clean": "rimraf dist"
+  },
+  "bin": {
+    "page-builder": "dist/index.js"
   },
   "keywords": [],
   "author": "",
@@ -18,6 +24,7 @@
     "dotenv": "^16.5.0",
     "find-config": "^1.0.0",
     "ink": "^6.0.0",
+    "jwt-decode": "^4.0.0",
     "react": "^19.1.0"
   },
   "devDependencies": {
@@ -26,6 +33,9 @@
     "@types/react": "^19.1.8",
     "cross-env": "^7.0.3",
     "react-devtools-core": "^6.1.5",
-    "tsx": "^4.20.3"
+    "rimraf": "^6.0.1",
+    "tsup": "^8.5.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
   }
 }

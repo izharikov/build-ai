@@ -58,7 +58,7 @@ export class SitecorePageCreator<
             await createItem(
                 {
                     name: 'Data',
-                    templateId: this.config.dateFolderTemplateId,
+                    templateId: this.config.dataFolderTemplateId,
                     parent: formatGuid(page.itemId),
                 },
                 this.connection,

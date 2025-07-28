@@ -34,7 +34,7 @@ export class FileStorage<T> implements Storage<T> {
     async save(key: string, value: T): Promise<void> {
         const filePath = this.getFilePath(key);
         await fs.mkdir(path.dirname(filePath), { recursive: true });
-        await fs.writeFile(filePath, JSON.stringify(value), 'utf-8');
+        await fs.writeFile(filePath, JSON.stringify(value, null, 2), 'utf-8');
     }
 
     private getFilePath(key: string) {

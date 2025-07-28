@@ -1,3 +1,4 @@
+import path from 'path';
 import { createLogger, format, transports } from 'winston';
 
 export const logger = createLogger({
@@ -10,5 +11,10 @@ export const logger = createLogger({
             (info) => `${info.timestamp} ${info.level}: ${info.message}`,
         ),
     ),
-    transports: [new transports.File({ filename: 'log.txt', level: 'debug' })],
+    transports: [
+        new transports.File({
+            filename: path.join('.', '.sitecore', 'logs.txt'),
+            level: 'debug',
+        }),
+    ],
 });
