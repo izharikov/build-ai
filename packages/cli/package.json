@@ -5,8 +5,9 @@
   "module": "dist/index.js",
   "type": "module",
   "scripts": {
-    "dev": "cross-env DEV=true tsx ./src/index.tsx",
+    "dev": "tsx ./src/index.tsx",
     "build": "pnpm clean && tsup",
+    "watch": "tsup --watch",
     "clean": "rimraf dist"
   },
   "bin": {

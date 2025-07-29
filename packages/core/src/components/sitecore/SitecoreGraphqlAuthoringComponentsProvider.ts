@@ -5,7 +5,7 @@ import {
     GqlItemTemplate,
     GqlRendering,
     GqlResponse,
-    graphql,
+    fetchGraphql,
     SitecoreConnection,
 } from '@/lib/sitecore/gql';
 import { ComponentsProvider, Component, Field } from '../index';
@@ -48,9 +48,7 @@ export class SitecoreGraphqlAuthoringComponentsProvider
     }
 
     async getComponents(): Promise<Component[]> {
-        const {
-            data: { sites },
-        } = await graphql<
+        const response = await fetchGraphql<
             GqlArrayResponse<{
                 name: string;
                 rootPath: string;
@@ -68,13 +66,16 @@ export class SitecoreGraphqlAuthoringComponentsProvider
             `,
             this.connection,
         );
+        const {
+            data: { sites },
+        } = response;
         const site = sites?.find((site) => site.name === this.site);
         if (!site) {
             throw new Error(`Site '${this.site}' not found`);
         }
         const {
             data: { item },
-        } = await graphql<GqlResponse<GqlRendering>>(
+        } = await fetchGraphql<GqlResponse<GqlRendering>>(
             `query Item {
     item(
         where: {
@@ -136,7 +137,7 @@ export class SitecoreGraphqlAuthoringComponentsProvider
                 : `id: "${datasourcePath.value}`;
             const {
                 data: { itemTemplate },
-            } = await graphql<GqlResponse<GqlItemTemplate>>(
+            } = await fetchGraphql<GqlResponse<GqlItemTemplate>>(
                 `
           query ItemTemplate {
             itemTemplate(

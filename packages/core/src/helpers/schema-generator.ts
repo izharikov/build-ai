@@ -63,9 +63,9 @@ function getDatasourceSchema(component: Component) {
 function registerComponentSchema(component: Component, repo: SchemaRepository) {
     let schema = z.object({
         name: z.literal(component.name).describe('Component name'),
-        internalDescription: z
-            .string()
-            .describe('internal short component description (max 5 words)'),
+        // internalDescription: z
+        //     .string()
+        //     .describe('internal short component description (max 5 words)'),
     });
 
     const datasourceSchema = getDatasourceSchema(component);

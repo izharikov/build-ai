@@ -11,10 +11,11 @@ export type LayoutComponent = {
 
 export type LayoutResult = {
     name: string;
+    state?: 'new' | 'saved';
+    itemId?: string;
     title: string;
     description: string;
     main: LayoutComponent[];
-    state: 'new' | 'saved';
 };
 
 export type DatasourceItem = {

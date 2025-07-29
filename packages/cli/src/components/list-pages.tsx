@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { LayoutPreview } from './message/layout-preview';
 import { Chat } from './chat';
 import { ChatTransport, UIMessage } from 'ai';
+import { Text } from 'ink';
 
 function LoadingSpinner({
     loading,
@@ -63,7 +64,8 @@ export function ListPages({
     return (
         <>
             <LoadingSpinner loading={loading} label="Loading..." />
-            {!pageId && (
+            {options.length === 0 && <Text>No pages found</Text>}
+            {!pageId && options.length > 0 && (
                 <Select
                     options={options}
                     onChange={(x) => setPageId(x)}

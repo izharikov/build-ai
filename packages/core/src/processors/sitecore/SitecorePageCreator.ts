@@ -26,44 +26,45 @@ export class SitecorePageCreator<
 
     async process(result: TResult, context: TContext): Promise<void> {
         const page = await this.createPage(result);
-        if (!page) {
-            throw new Error('Page not created');
-        }
         if (context.layout.datasources.length > 0) {
-            const dataFolder = await this.createDataFolder(context, page);
-            if (!dataFolder) {
-                throw new Error('Data folder not created');
-            }
+            const dataFolder = await this.createDataFolder(
+                context,
+                page as GqlItem,
+            );
             for (let i = 0; i < context.layout.datasources.length; i++) {
                 const ds = context.layout.datasources[i];
                 const item = await this.createDataSource(
                     context,
-                    dataFolder,
+                    dataFolder as GqlItem,
                     ds.templateId,
                     {
                         name: ds.name,
                         fields: ds.fields,
                     },
                 );
-                ds.id = formatGuid(item?.itemId);
+                ds.id = formatGuid((item as GqlItem).itemId);
             }
         }
-        await this.updatePage(page, {
+        const finalResult = await this.updatePage(page as GqlItem, {
             __Renderings: context.layout.raw(this.config.mainPlaceholder),
         });
+
+        if ('data' in finalResult) {
+            result.state = 'saved';
+            result.itemId = finalResult?.data?.updateItem?.item?.itemId;
+        }
     }
 
     async createDataFolder<TContext>(context: TContext, page: GqlItem) {
-        return (
-            await createItem(
-                {
-                    name: 'Data',
-                    templateId: this.config.dataFolderTemplateId,
-                    parent: formatGuid(page.itemId),
-                },
-                this.connection,
-            )
-        ).data.createItem?.item;
+        const item = await createItem(
+            {
+                name: 'Data',
+                templateId: this.config.dataFolderTemplateId,
+                parent: formatGuid(page.itemId),
+            },
+            this.connection,
+        );
+        return item?.data?.createItem?.item;
     }
     async createDataSource<TContext>(
         context: TContext,
@@ -71,19 +72,18 @@ export class SitecorePageCreator<
         templateId: string,
         datasource: { name: string } & Fields,
     ) {
-        return (
-            await createItem(
-                {
-                    name: datasource.name,
-                    templateId: templateId,
-                    parent: formatGuid(dataFolder.itemId),
-                    fields: {
-                        ...datasource.fields,
-                    },
+        const item = await createItem(
+            {
+                name: datasource.name,
+                templateId: templateId,
+                parent: formatGuid(dataFolder.itemId),
+                fields: {
+                    ...datasource.fields,
                 },
-                this.connection,
-            )
-        ).data.createItem?.item;
+            },
+            this.connection,
+        );
+        return item?.data?.createItem?.item;
     }
 
     async updatePage(page: GqlItem, fields: Fields['fields']) {
@@ -109,6 +109,6 @@ export class SitecorePageCreator<
             },
             this.connection,
         );
-        return response.data.createItem?.item;
+        return response?.data?.createItem?.item;
     }
 }

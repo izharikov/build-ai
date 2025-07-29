@@ -10,3 +10,10 @@ export function formatGuid<T extends string | undefined>(guid: T) {
         guid.slice(20, 32),
     ].join('-');
 }
+
+export function itemName(path: string) {
+    return path
+        .replaceAll('/', '')
+        .replace(/[^a-zA-Z0-9_]/g, '-')
+        .toLowerCase();
+}

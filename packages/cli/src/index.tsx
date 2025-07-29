@@ -40,11 +40,11 @@ const App = (props: AppProps) => {
             <Box>
                 <Text color="cyanBright">Page Builder CLI</Text>
             </Box>
-            <Box>{error && <Alert variant="error">{error}</Alert>}</Box>
             {steps.length > 0 &&
                 steps.map((x, i) => (
                     <StartStepUI key={i} name={x.name} status={x.status} />
                 ))}
+            <Box>{error && <Alert variant="error">{error}</Alert>}</Box>
             {initDone && (
                 <Box flexDirection="column" paddingY={1}>
                     {menuOption === 'menu' && (
@@ -73,11 +73,9 @@ const App = (props: AppProps) => {
     );
 };
 async function start() {
-    const { steps, transport, storage } = initialSteps({
-        platform: 'sitecore',
-        storage: 'local',
-    });
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    const { steps, transport, storage } = initialSteps(
+        '.page-builder.example.json',
+    );
     render(<App steps={steps} transport={transport} storage={storage} />);
 }
 

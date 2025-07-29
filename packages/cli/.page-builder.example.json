@@ -1,0 +1,25 @@
+{
+    "platform": "sitecore",
+    "storage": "local",
+    "sitecore": {
+        "site": "blueprint",
+        "graphql": {
+            "baseUrl": ""
+        },
+        "authentication": {
+            "type": "client_credentials",
+            "clientCredentials": {
+                "clientId": "",
+                "clientSecret": ""
+            }
+        },
+        "pageTemplateId": "{95CB88E7-8068-4A9C-9EEB-05F9A22C49D4}",
+        "dataFolderTemplateId": "{1C82E550-EBCD-4E5D-8ABD-D50D0809541E}",
+        "parentItemId": "{93091B69-996A-4564-A477-8D44A6684F5A}",
+        "mainPlaceholder": "/headless-main/sxa-main/container-1"
+    },
+    "loadDotEnv": false,
+    "env": {
+        "OPENAI_API_KEY": ""
+    }
+}

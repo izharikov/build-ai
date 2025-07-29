@@ -13,15 +13,15 @@ export type GqlArrayResponse<T> = GqlResponse<T[]>;
 
 let increment = 0;
 
-export async function graphql<T>(
+async function graphql<T>(
     query: string,
     connection: SitecoreConnection,
     variables?: Record<string, unknown>,
-): Promise<T> {
+): Promise<T | GqlError> {
     const id = increment++;
     logger.info(`[${id}] Executing GraphQL query: ${query}`);
     logger.debug(`[${id}] GraphQL variables: ${JSON.stringify(variables)}`);
-    return await fetch(
+    const res = await fetch(
         `${connection.baseUrl}sitecore/api/authoring/graphql/v1`,
         {
             method: 'POST',
@@ -34,11 +34,26 @@ export async function graphql<T>(
                 variables,
             }),
         },
-    ).then((res) => {
-        const data = res.json() as T;
-        logger.debug(`[${id}] GraphQL response: ${JSON.stringify(data)}`);
-        return data;
-    });
+    );
+    const json = await res.json();
+    logger.debug(`[${id}] GraphQL response: ${JSON.stringify(json)}`);
+    if (json.errros) {
+        return json as GqlError;
+    }
+    const data = json as T;
+    return data;
+}
+
+export async function fetchGraphql<T extends object>(
+    query: string,
+    connection: SitecoreConnection,
+    variables?: Record<string, unknown>,
+): Promise<T> {
+    const res = await graphql<T>(query, connection, variables);
+    if (!res || 'errors' in res) {
+        throw new Error(res.errors.map((x) => x.message).join('; '));
+    }
+    return res;
 }
 
 export type GqlRendering = {
@@ -51,6 +66,12 @@ export type GqlRendering = {
             };
         }[];
     };
+};
+
+export type GqlError = {
+    errors: {
+        message: string;
+    }[];
 };
 
 export type GqlItem = {
@@ -99,7 +120,7 @@ fields(excludeStandardFields: true) {
 `;
 
 export async function getById(id: string, connection: SitecoreConnection) {
-    return await graphql<GqlResponse<GqlItem>>(
+    return await fetchGraphql<GqlResponse<GqlItem>>(
         `
         query Item {
           item(where: { itemId: "${id}" }) {
@@ -121,7 +142,9 @@ export async function createItem(
     },
     connection: SitecoreConnection,
 ) {
-    const entries = Object.entries(item.fields ?? {});
+    const entries = Object.entries(item.fields ?? {}).filter(
+        ([k, v]) => k && v,
+    );
     const fieldsPart =
         entries.length > 0
             ? entries.map(([key]) => `$${key}: String!`).join(',')
@@ -137,8 +160,7 @@ export async function createItem(
             ${
                 item.fields
                     ? `fields: [
-              ${Object.entries(item.fields)
-                  .filter(([k, v]) => k && v)
+              ${entries
                   .map(([key]) => `{ name: "${key}", value: $${key} }`)
                   .join('\n')}
             ]`
@@ -152,14 +174,13 @@ export async function createItem(
         }
       }
     `;
-    const res = await graphql<{
+    return await fetchGraphql<{
         data: {
             createItem: {
                 item: GqlItem | undefined;
             };
         };
     }>(query, connection, item.fields);
-    return res;
 }
 
 export async function updateItem(
@@ -175,7 +196,7 @@ export async function updateItem(
         entries.length > 0
             ? entries.map(([key]) => `$${key}: String!`).join(',')
             : undefined;
-    return await graphql<{
+    return await fetchGraphql<{
         data: {
             updateItem: {
                 item: GqlItem | undefined;

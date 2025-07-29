@@ -16,6 +16,7 @@ import {
     LayoutResult,
 } from './processors/sitecore/types';
 import { ResultProcessor } from './processors';
+import { itemName } from './lib';
 
 const model = openai('gpt-4.1-nano');
 
@@ -40,26 +41,35 @@ export type CommandState = {
 export const defaultPrompts: Prompts = {
     chooseStep: {
         system: `
-Your task is to choose the best step to take next based on conversation.
-You are very first and important part of the system, the final goal is to generate the page.
+## Instructions
+Based on conversation, choose the best step to take next.
 
-ALSWAYS CHOOSE 'generate' step.
+You are very first and important part of the system, the final goal is to generate the layout.
+
+Choose 'generate' step if ALL the following:
+- content of the layout is clear: topic, target audience, style, etc.
+- quick summary of content is approved by the user
+
+If any of the above is not true, choose 'refine' step.
+During refine step provide suggestions for:
+- content of the layout (title, description, topic, audience, etc.)
+- quick summary of content is approved by the user
         `,
     },
     generateLayout: {
         system: `
 ## Instructions
-Generate a page based on user requirements.
+Generate the layout based on user requirements.
 
 ## Components rules
-- Always start with Container component in the main content area. And then place row/column components to style and organize the page.
+- Always start with Container component in the main content area. And then place row/column components to style and organize the layout.
 - Try to use 'Rich Text' component as minimum as possible (only when it's absolutely necessary, e.g. for code blocks).
 
 ## Datasource rules
 - For any RTE field use HTML (markdown is not supported).
 
-## Page structure rules
-- Generate the page with minimum 7 components with datasources, if not specified.
+## Layout structure rules
+- Generate the layout with minimum 7 components with datasources, if not specified.
 
 {{globalContext}}
 
@@ -79,17 +89,16 @@ function chooseStep(chat: ChatContext, messages: ModelMessage[]) {
         messages,
         system: getPrompt(chat.prompts.chooseStep.system, chat.prompts),
         schema: z.object({
+            currentSummary: z
+                .string()
+                .describe('current summary of the content'),
             step: z.union([
                 z
                     .literal('generate')
-                    .describe(
-                        "when it's enough information to generate the page",
-                    ),
+                    .describe("when it's enough information to start generate"),
                 z
                     .literal('refine')
-                    .describe(
-                        'need to ask more questions to refine the page generation',
-                    ),
+                    .describe('need to ask more questions / get approval'),
             ]),
             question: z
                 .string()
@@ -172,7 +181,7 @@ async function fetchDataFromStorage(
     message.parts.push({
         type: `data-${type}`,
         id: type,
-        data: layout,
+        data: { data: layout, state: 'done' },
     });
 }
 
@@ -224,6 +233,12 @@ export const generateLayout = async (
         return;
     }
     if (command === 'save') {
+        state('command', {
+            state: 'loading',
+            data: {
+                command: '/save',
+            },
+        });
         const layout = getLastDataStream<LayoutResponseStream>(
             chat.messages,
             'layout',
@@ -239,16 +254,13 @@ export const generateLayout = async (
             });
             return;
         }
-        state('command', { command: '/save', state: 'loading' });
         try {
-            // TODO: add steps + result
             await processAndSaveLayout(
                 layout,
                 resultProcessor,
                 componentsProvider,
             );
         } catch (e) {
-            await new Promise((resolve) => setTimeout(resolve, 0));
             state('command', {
                 state: 'done',
                 data: {
@@ -286,7 +298,7 @@ export const generateLayout = async (
     const stream = layoutStream(chat, messages, schema, registry);
     await writeObjectStream('layout', stream);
     const layout = await stream.object;
-    await storage.save('layout', layout);
+    await storage.save(itemName(layout.path ?? ''), layout);
 };
 
 export const processAndSaveLayout = async (
@@ -296,10 +308,7 @@ export const processAndSaveLayout = async (
 ) =>
     await resultProcessor.process(
         {
-            name: layout.path
-                .replaceAll('/', '')
-                .replace(/[^a-zA-Z0-9_]/g, '-')
-                .toLowerCase(),
+            name: itemName(layout.path ?? ''),
             ...layout,
             state: 'new',
             main: layout.main as LayoutResult['main'],

@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 export interface Storage<T> {
+    initialize(): Promise<void>;
     get(key: string): Promise<T | undefined>;
     getAll(): Promise<((T & { id: string }) | undefined)[]>;
     save(key: string, value: T): Promise<void>;
@@ -9,6 +10,11 @@ export interface Storage<T> {
 
 export class FileStorage<T> implements Storage<T> {
     constructor(private readonly folders: string[]) {}
+
+    async initialize(): Promise<void> {
+        await fs.mkdir(path.join(...this.folders), { recursive: true });
+    }
+
     async getAll(): Promise<((T & { id: string }) | undefined)[]> {
         const files = await fs.readdir(path.join(...this.folders));
         return await Promise.all(

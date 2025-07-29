@@ -19,7 +19,6 @@ function Command({
     command: DeepPartial<CommandState>;
     state: DataState | undefined;
 }) {
-    // console.log('command', JSON.stringify({ command, state }));
     return (
         <>
             {(state === 'loading' || state === 'streaming') && (
@@ -78,7 +77,8 @@ export function AgentMessage({
             {command && <Command command={command} state={commandState} />}
             {step?.step === 'refine' && (
                 <Text color="blue">
-                    {`A: `} {step.question}
+                    {`A: `} {step.currentSummary} {`\n`}
+                    {step.question}
                 </Text>
             )}
             {step?.step === 'generate' && (
