@@ -1,5 +1,5 @@
 import { Select } from '@inkjs/ui';
-import { Box, Spacer, Text } from 'ink';
+import { Box, Text } from 'ink';
 import { useEffect, useState } from 'react';
 
 export type MenuOption = 'new' | 'list' | 'help';
@@ -19,7 +19,7 @@ export function Menu({
 
     return (
         <>
-            <Box flexDirection="column" gap={1} height={10}>
+            <Box flexDirection="column" gap={1}>
                 <Select
                     options={[
                         {
@@ -38,8 +38,7 @@ export function Menu({
                     onChange={setValue}
                 />
             </Box>
-            <Spacer />
-            <Box borderTopColor="gray" borderTop>
+            <Box borderTopColor="gray" borderTop marginTop={1}>
                 <Text color="gray">Please select the option.</Text>
             </Box>
         </>

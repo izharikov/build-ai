@@ -1,8 +1,9 @@
 import { DeepPartial } from '@/lib/types';
 import { LayoutComponent, LayoutResult } from '@page-builder/core/processors';
-import { Box, Spacer, Text } from 'ink';
+import { Box, Text } from 'ink';
 import { InputMessage } from './input';
 import React, { useState } from 'react';
+import { ScrollArea } from '../ScrollArea';
 
 export function BoxComponentPreview({
     component,
@@ -107,7 +108,7 @@ function RawComponentPreview({
                                     paddingLeft={2}
                                 >
                                     {value &&
-                                        value.length &&
+                                        value.length > 0 &&
                                         value
                                             .filter((x) => x)
                                             .map((item, index) => (
@@ -140,27 +141,28 @@ export function LayoutPreview({
     const components = Object.values(layout.main || {});
 
     const [commandSelected, setCommandSelected] = useState<boolean>(false);
-
+    const [commandShown, setCommandShown] = useState<boolean>(false);
     return (
-        <Box flexDirection="column" paddingY={1}>
-            <Text>{layout.title}</Text>
-            <Text>
-                {`├── `}
-                {layout.description}
-            </Text>
-            <Box flexDirection="column" paddingX={2}>
-                <Text color="gray">{`├── [main]`}</Text>
-                {components.length > 0 &&
-                    components
-                        .filter((x) => x)
-                        .map((component, index) => (
-                            <RawComponentPreview
-                                key={'main-' + index}
-                                component={component!}
-                            />
-                        ))}
-            </Box>
-            <Spacer />
+        <>
+            <ScrollArea height={20} disabled={commandSelected || commandShown}>
+                <Text>{layout.title}</Text>
+                <Text>
+                    {`├── `}
+                    {layout.description}
+                </Text>
+                <Box flexDirection="column" paddingX={2}>
+                    <Text color="gray">{`├── [main]`}</Text>
+                    {components.length > 0 &&
+                        components
+                            .filter((x) => x)
+                            .map((component, index) => (
+                                <RawComponentPreview
+                                    key={'main-' + index}
+                                    component={component!}
+                                />
+                            ))}
+                </Box>
+            </ScrollArea>
             {!hideCommands && !commandSelected && (
                 <Box flexDirection="column" paddingY={1}>
                     <InputMessage
@@ -176,10 +178,15 @@ export function LayoutPreview({
                                 name: 'chat',
                                 description: 'Start a chat (to edit layout)',
                             },
+                            {
+                                name: 'test',
+                                description: 'Test',
+                            },
                         ]}
+                        onCommandShown={setCommandShown}
                     />
                 </Box>
             )}
-        </Box>
+        </>
     );
 }

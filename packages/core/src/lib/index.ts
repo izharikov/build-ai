@@ -17,3 +17,17 @@ export function itemName(path: string) {
         .replace(/[^a-zA-Z0-9_]/g, '-')
         .toLowerCase();
 }
+
+function unify(a: string) {
+    if (a.length < 3) {
+        return a;
+    }
+    if (a[0] === '{' && a[a.length - 1] === '}') {
+        return a.slice(1, -1);
+    }
+    return a;
+}
+
+export function uuidCompare(a: string, b: string) {
+    return unify(a).toLowerCase() === unify(b).toLowerCase();
+}

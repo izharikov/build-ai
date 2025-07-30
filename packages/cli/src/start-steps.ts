@@ -27,6 +27,7 @@ type PageBuilderConfig = {
     platform: Platform;
     storage: 'local';
     sitecore?: {
+        useDotEnv: boolean;
         site: string;
         graphql: {
             baseUrl: string;
@@ -102,10 +103,17 @@ function createComponentsProvider(
                 {
                     accessToken: sitecore.graphql.accessToken as string,
                     baseUrl: sitecore.graphql.baseUrl as string,
+                    settings: {
+                        availableRenderingNames: [
+                            'Page Content',
+                            'Page Structure',
+                        ],
+                    },
                 },
                 sitecore.site as string,
             ),
             ['.sitecore', sitecore.site as string],
+            true,
         );
     }
 
@@ -129,6 +137,12 @@ function createSaveProcessor(
                 {
                     accessToken: sitecore.graphql.accessToken!,
                     baseUrl: sitecore.graphql.baseUrl,
+                    settings: {
+                        availableRenderingNames: [
+                            'Page Content',
+                            'Page Structure',
+                        ],
+                    },
                 },
                 {
                     pageTemplateId: sitecore.pageTemplateId,
@@ -150,7 +164,9 @@ async function loadPageBuilderJson(
     const config = JSON.parse(file) as PageBuilderConfig;
     if (config.env) {
         for (const key in config.env) {
-            process.env[key] = config.env![key];
+            if (config.env![key]) {
+                process.env[key] = config.env![key];
+            }
         }
     }
 
@@ -161,6 +177,13 @@ async function loadPageBuilderJson(
     checkNotEmpty(process.env.OPENAI_API_KEY, 'OPENAI_API_KEY');
 
     if (config.platform === 'sitecore' && config.sitecore) {
+        if (config.sitecore.useDotEnv) {
+            const clietnCred = config.sitecore.authentication.clientCredentials;
+            if (clietnCred) {
+                clietnCred.clientId = process.env.SITECORE_CLIENT_ID!;
+                clietnCred.clientSecret = process.env.SITECORE_CLIENT_SECRET!;
+            }
+        }
         const authentication = config.sitecore.authentication;
         if (authentication.type === 'user_json') {
             if (!authentication.userJsonPath) {
@@ -237,6 +260,7 @@ export function initialSteps(configFile?: string) {
                 name: 'Initialize components provider',
                 execute: async () => {
                     componentsProvider = createComponentsProvider(config);
+                    await componentsProvider.getComponents();
                 },
             },
             {

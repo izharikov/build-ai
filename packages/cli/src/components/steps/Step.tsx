@@ -1,5 +1,5 @@
 import React, { ReactNode, useState } from 'react';
-import { Box, Text, useInput, Spacer } from 'ink';
+import { Box, Text, useInput } from 'ink';
 
 interface StepProps {
     children: ReactNode;
@@ -22,9 +22,9 @@ const Step: React.FC<StepProps> = ({ children, onBack }) => {
     });
 
     return (
-        <Box flexDirection="column" width="100%" minHeight={10}>
+        <Box flexDirection="column" width="100%">
             {children}
-            <Spacer />
+            <Box height={1} />
             <Box borderTopColor="gray" borderTop>
                 {isConfirmingExit ? (
                     <Text color="yellow">

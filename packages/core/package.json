@@ -40,6 +40,7 @@
   "dependencies": {
     "@ai-sdk/openai": "2.0.0-alpha.15",
     "ai": "5.0.0-alpha.15",
+    "exa-js": "^1.8.25",
     "find-config": "^1.0.0",
     "winston": "^3.17.0",
     "zod": "^3.25.76"

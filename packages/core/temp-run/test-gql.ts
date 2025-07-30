@@ -19,6 +19,9 @@ const provider = new SitecoreGraphqlAuthoringComponentsProvider(
     {
         accessToken: process.env.SITECORE_GRAPHQL_ACCESS_TOKEN!,
         baseUrl: process.env.SITECORE_GRAPHQL_BASE_URL!,
+        settings: {
+            availableRenderingNames: ['Page Content', 'Page Structure'],
+        },
     },
     process.env.SITECORE_SITE!,
 );
@@ -26,28 +29,14 @@ const provider = new SitecoreGraphqlAuthoringComponentsProvider(
 const resultProcessor = new ChainProcessor<
     LayoutResult,
     GeneratedLayoutContext
->([
-    new SitecorePageToLayoutProcessor<LayoutResult, GeneratedLayoutContext>(),
-    new SitecorePageCreator<LayoutResult, GeneratedLayoutContext>(
-        {
-            accessToken: process.env.SITECORE_GRAPHQL_ACCESS_TOKEN!,
-            baseUrl: process.env.SITECORE_GRAPHQL_BASE_URL!,
-        },
-        {
-            pageTemplateId: '{95CB88E7-8068-4A9C-9EEB-05F9A22C49D4}',
-            dataFolderTemplateId: '{1C82E550-EBCD-4E5D-8ABD-D50D0809541E}',
-            parentItemId: '{93091B69-996A-4564-A477-8D44A6684F5A}',
-            mainPlaceholder: '/headless-main/sxa-main/container-1',
-        },
-    ),
-]);
+>([new SitecorePageToLayoutProcessor<LayoutResult, GeneratedLayoutContext>()]);
 const storage = new FileStorage(['.sitecore', 'pages']);
-const page = await storage.get('page');
+const page = await storage.get('sitecore-content-hub');
 
 const componentsProvider = new CachedComponentsProvider(
     provider,
     ['.sitecore', process.env.SITECORE_SITE!],
-    true,
+    // true,
 );
 
 const context: GeneratedLayoutContext = {
@@ -60,5 +49,5 @@ const context: GeneratedLayoutContext = {
 
 await resultProcessor.process(page as LayoutResult, context);
 
-console.log('Datasources', JSON.stringify(context.layout.datasources, null, 2));
+// console.log('Datasources', JSON.stringify(context.layout.datasources, null, 2));
 console.log('Created', context.layout.raw());

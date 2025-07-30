@@ -9,11 +9,12 @@ type Rendering = {
     placeholder: string;
     datasourceRef: string | undefined;
     after: string | undefined;
+    dynamicPlaceholderId?: string;
 };
 
 type XmlVal =
     | {
-          value: string | undefined;
+          value: string | [string, string?][] | undefined;
       }
     | {
           id: string | undefined;
@@ -23,7 +24,17 @@ function val(x: XmlVal) {
     if ('id' in x && x.id) {
         return '{' + x.id.toUpperCase() + '}';
     }
-    return 'value' in x ? (x.value ?? undefined) : undefined;
+    if ('value' in x) {
+        if (Array.isArray(x.value)) {
+            const res = x.value
+                .filter(([, v]) => v)
+                .map(([k, v]) => `${k}=${v}`)
+                .join('&');
+            return res.length > 0 ? res : undefined;
+        }
+        return x.value;
+    }
+    return undefined;
 }
 
 function xmlTag(
@@ -35,7 +46,9 @@ function xmlTag(
 ) {
     return `${' '.repeat(intend)}<${tag} ${attributes
         .filter((x) => x['value'] || x['id'])
-        .map((x) => `${x.key}="${val(x)}"`)
+        .map((x) => [x.key, val(x)])
+        .filter(([, v]) => v)
+        .map(([k, v]) => `${k}="${v}"`)
         .join(' ')} />`;
 }
 
@@ -45,6 +58,7 @@ export class SitecorePageToLayoutProcessor<
 > implements ResultProcessor<TResult, TContext>
 {
     process(page: TResult, context: TContext): Promise<void> {
+        let dynamicCounter = 7;
         context.layout = {
             raw: () => '',
             datasources: [],
@@ -87,29 +101,39 @@ export class SitecorePageToLayoutProcessor<
                 };
                 context.layout.datasources.push(ds);
             }
-            const pl =
-                (placeholder.length > 1 ? PLACEHOLDER_SEPARATOR : '') +
-                placeholder.join('/');
+            const pl = placeholder.join(PLACEHOLDER_SEPARATOR);
+            const children = Object.keys(component?.children ?? {});
+            const dynamicPlaceholderId = children.some((x) =>
+                x.endsWith('-{*}'),
+            )
+                ? '' + dynamicCounter++
+                : undefined;
             renderings.push({
                 uid: randomUUID(),
                 id: realComponent.id,
                 placeholder: pl,
                 datasourceRef: ds?._internalId,
                 after: renderings.findLast((x) => x.placeholder === pl)?.uid,
+                dynamicPlaceholderId,
             });
-            if (!component.children) {
+
+            if (children.length === 0) {
                 continue;
             }
-            for (const child of Object.keys(component.children)) {
+            for (const child of children) {
+                const plName = child.replace(
+                    '-{*}',
+                    '-' + dynamicPlaceholderId,
+                );
                 for (const childComponent of component.children[child]) {
                     queue.push({
                         component: childComponent,
-                        placeholder: [...placeholder, child],
+                        placeholder: [...placeholder, plName],
                     });
                 }
             }
         }
-        context.layout.raw = (mailPlaceholder?: string) => {
+        context.layout.raw = (mainPlaceholder?: string) => {
             const deviceId =
                 context.layout.deviceId ??
                 '{FE5D7FDF-89C0-4D99-9AA3-B5FBD009C9F3}';
@@ -122,7 +146,16 @@ ${renderings
         const ds = context.layout.datasources.find(
             (ds) => ds._internalId === x.datasourceRef,
         );
-        const ph = x.placeholder.replace('__main__', mailPlaceholder ?? 'main');
+        let ph = x.placeholder.replace('__main__', mainPlaceholder ?? 'main');
+        if (ph.lastIndexOf(PLACEHOLDER_SEPARATOR) === 0) {
+            ph = ph.slice(PLACEHOLDER_SEPARATOR.length);
+        }
+        if (
+            ph.indexOf(PLACEHOLDER_SEPARATOR) !== -1 &&
+            !ph.startsWith(PLACEHOLDER_SEPARATOR)
+        ) {
+            ph = PLACEHOLDER_SEPARATOR + ph;
+        }
         return xmlTag(
             'r',
             [
@@ -135,6 +168,10 @@ ${renderings
                 { key: 'p:before', value: x.after ? undefined : '*' },
                 { key: 's:ds', id: ds?.id },
                 { key: 's:ph', value: ph },
+                {
+                    key: 's:par',
+                    value: [['DynamicPlaceholderId', x.dynamicPlaceholderId]],
+                },
             ],
             4,
         );

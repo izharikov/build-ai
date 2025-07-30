@@ -2,9 +2,10 @@
     "platform": "sitecore",
     "storage": "local",
     "sitecore": {
+        "useDotEnv": true,
         "site": "blueprint",
         "graphql": {
-            "baseUrl": ""
+            "baseUrl": "https://xmc-brimit14221-demo9d1d-dev2bfc.sitecorecloud.io/"
         },
         "authentication": {
             "type": "client_credentials",
@@ -18,8 +19,9 @@
         "parentItemId": "{93091B69-996A-4564-A477-8D44A6684F5A}",
         "mainPlaceholder": "/headless-main/sxa-main/container-1"
     },
-    "loadDotEnv": false,
+    "loadDotEnv": true,
     "env": {
-        "OPENAI_API_KEY": ""
+        "OPENAI_API_KEY": "",
+        "EXA_API_KEY_": ""
     }
 }

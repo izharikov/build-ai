@@ -3,6 +3,9 @@ import { logger } from '../logging';
 export type SitecoreConnection = {
     accessToken: string;
     baseUrl: string;
+    settings: {
+        availableRenderingNames: string[];
+    };
 };
 
 export type GqlResponse<T> = {
@@ -51,6 +54,7 @@ export async function fetchGraphql<T extends object>(
 ): Promise<T> {
     const res = await graphql<T>(query, connection, variables);
     if (!res || 'errors' in res) {
+        console.error(res);
         throw new Error(res.errors.map((x) => x.message).join('; '));
     }
     return res;

@@ -1,14 +1,20 @@
 import {
     createUIMessageStream,
     ModelMessage,
-    streamObject,
     UIMessage,
     UIMessageStreamWriter,
 } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import z from 'zod/v4';
 import { layoutStructureSchema } from './helpers/schema-generator';
-import { customConvertMessages, getPrompt, objectSchema } from './lib/ai';
+import {
+    customConvertMessages,
+    generateObjectStream,
+    getPrompt,
+    objectSchema,
+    ObjectStreamResult,
+    webSearch,
+} from './lib/ai';
 import { ComponentsProvider } from './components';
 import { Storage } from './storage';
 import {
@@ -17,8 +23,9 @@ import {
 } from './processors/sitecore/types';
 import { ResultProcessor } from './processors';
 import { itemName } from './lib';
+import Exa from 'exa-js';
 
-const model = openai('gpt-4.1-nano');
+const model = openai('gpt-4.1-mini');
 
 export type Prompts = {
     chooseStep: {
@@ -41,20 +48,17 @@ export type CommandState = {
 export const defaultPrompts: Prompts = {
     chooseStep: {
         system: `
-## Instructions
-Based on conversation, choose the best step to take next.
+        ## Instructions
+        Based on conversation, choose the best step to take next.
 
-You are very first and important part of the system, the final goal is to generate the layout.
+        You are very first and important part of the system, the final goal is to generate the layout.
 
-Choose 'generate' step if ALL the following:
-- content of the layout is clear: topic, target audience, style, etc.
-- quick summary of content is approved by the user
+        Choose 'generate' step if ALL the following:
+        - content of the layout is clear: topic, target audience, style, etc.
+        - quick summary of content is approved by the user
 
-If any of the above is not true, choose 'refine' step.
-During refine step provide suggestions for:
-- content of the layout (title, description, topic, audience, etc.)
-- quick summary of content is approved by the user
-        `,
+        If any of the above is not true, choose 'refine' step.
+                `,
     },
     generateLayout: {
         system: `
@@ -71,6 +75,9 @@ Generate the layout based on user requirements.
 ## Layout structure rules
 - Generate the layout with minimum 7 components with datasources, if not specified.
 
+## Tools
+- Use web_search to find the best content for the layout + add additional links or context.
+
 {{globalContext}}
 
 {{timeContext}}
@@ -84,14 +91,14 @@ export type ChatContext = {
 };
 
 function chooseStep(chat: ChatContext, messages: ModelMessage[]) {
-    return streamObject({
+    return generateObjectStream({
         model,
         messages,
         system: getPrompt(chat.prompts.chooseStep.system, chat.prompts),
         schema: z.object({
-            currentSummary: z
+            layoutContent: z
                 .string()
-                .describe('current summary of the content'),
+                .describe('current content for datasources'),
             step: z.union([
                 z
                     .literal('generate')
@@ -113,10 +120,6 @@ export type ChooseStepResponse = Awaited<
     ReturnType<typeof chooseStep>['object']
 >;
 
-type SchemaType<T extends Record<string, unknown>> = ReturnType<
-    typeof objectSchema<T>
->;
-
 type LayoutStructureSchema = ReturnType<typeof layoutStructureSchema>;
 
 function layoutStream(
@@ -125,11 +128,16 @@ function layoutStream(
     schema: LayoutStructureSchema['schema'],
     registry: LayoutStructureSchema['registry'],
 ) {
-    return streamObject({
+    const exa = new Exa(process.env.EXA_API_KEY);
+    return generateObjectStream({
         model,
         messages,
         system: getPrompt(chat.prompts.generateLayout.system, chat.prompts),
-        schema: objectSchema(schema, registry),
+        schema: schema,
+        dynamicSchema: objectSchema(schema, registry),
+        tools: {
+            web_search: webSearch(exa),
+        },
     });
 }
 
@@ -214,10 +222,10 @@ export const generateLayout = async (
         });
     }
 
-    async function writeObjectStream<
-        K extends Record<string, unknown>,
-        T extends SchemaType<K>,
-    >(type: StateTypes, stream: ReturnType<typeof streamObject<T>>) {
+    async function writeObjectStream<T>(
+        type: StateTypes,
+        stream: ObjectStreamResult<T>,
+    ) {
         state(type, { state: 'loading' });
         for await (const part of stream.partialObjectStream) {
             state(type, { state: 'streaming', data: part });

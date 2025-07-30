@@ -21,16 +21,19 @@ export function InputMessage({
     sendMessage,
     commands = [],
     onCommand,
+    onCommandShown,
 }: {
     placeholder?: string;
     sendMessage?: (message: { text: string }) => void;
     commands?: CommandOption[];
     onCommand?: (command: string) => void;
+    onCommandShown?: (shown: boolean) => void;
 }) {
     const [input, setInput] = useState('');
     const [commandSelected, setCommandSelected] = useState<boolean>(false);
     const [inputEnabled, setInputEnabled] = useState(true);
     const showCommands = commands.length > 0 && input.startsWith('/');
+    onCommandShown?.(showCommands);
     const enteredCommand = showCommands ? input.substring(1) : '';
     const filteredCommands = showCommands
         ? commands.filter((x) => x.name.startsWith(enteredCommand))
@@ -67,7 +70,7 @@ export function InputMessage({
                 {!inputEnabled && <Text>{input}</Text>}
             </Box>
             {commands.length > 0 && (
-                <Box minHeight={5}>
+                <Box minHeight={3}>
                     {showCommands && filteredCommands.length > 0 && (
                         <Select
                             options={filteredCommands.map((x) => ({

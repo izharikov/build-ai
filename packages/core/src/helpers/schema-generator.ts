@@ -95,6 +95,7 @@ function populateSchema(
     let schema = getExistingScema(repo, component);
     const childPlaceholders = component.placement.allowedChildPlaceholders;
     if (childPlaceholders.length > 0) {
+        let children = z.object({});
         for (const childPlaceholder of childPlaceholders) {
             const allowedChildrenComponents = allComponents.filter((c) =>
                 c.placement.allowedParentPlaceholders.includes(
@@ -107,7 +108,7 @@ function populateSchema(
             }
 
             if (allowedChildrenComponents.length == 1) {
-                schema = schema.extend({
+                children = children.extend({
                     [childPlaceholder]: z
                         .array(
                             getExistingScema(
@@ -121,7 +122,7 @@ function populateSchema(
                 });
                 continue;
             }
-            schema = schema.extend({
+            children = children.extend({
                 [childPlaceholder]: z
                     .array(
                         z.union(
@@ -135,6 +136,10 @@ function populateSchema(
                     ),
             });
         }
+
+        schema = schema.extend({
+            children: children,
+        });
 
         repo[idFunc(component)] = schema;
     }

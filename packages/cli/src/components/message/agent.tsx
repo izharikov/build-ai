@@ -77,7 +77,7 @@ export function AgentMessage({
             {command && <Command command={command} state={commandState} />}
             {step?.step === 'refine' && (
                 <Text color="blue">
-                    {`A: `} {step.currentSummary} {`\n`}
+                    {`A: `} {step.layoutContent} {`\n`}
                     {step.question}
                 </Text>
             )}

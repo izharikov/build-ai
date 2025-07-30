@@ -9,7 +9,7 @@ import {
     SitecoreConnection,
 } from '@/lib/sitecore/gql';
 import { ComponentsProvider, Component, Field } from '../index';
-import { formatGuid } from '@/lib';
+import { formatGuid, uuidCompare } from '@/lib';
 
 function getFieldType(field: GqlItemField): Field['type'] {
     switch (field.type) {
@@ -35,6 +35,10 @@ function getFieldType(field: GqlItemField): Field['type'] {
             return 'text';
     }
 }
+
+type InternalComponent = Component & {
+    placeholderSettingIds: string[] | undefined;
+};
 
 export class SitecoreGraphqlAuthoringComponentsProvider
     implements ComponentsProvider
@@ -96,17 +100,119 @@ export class SitecoreGraphqlAuthoringComponentsProvider
 `,
             this.connection,
         );
-        const renderings = item?.children.nodes.flatMap((x) =>
-            x.field.value.split('|'),
-        );
-        return (
+        const availableRenderingNames =
+            this.connection.settings.availableRenderingNames;
+        const nameFilter = (x: { name: string }) =>
+            availableRenderingNames.length === 0 ||
+            availableRenderingNames.includes(x.name);
+        const renderingIds = item?.children.nodes
+            .filter(nameFilter)
+            .flatMap((x) => x.field.value.split('|'));
+        // main renderings
+        const renderings = (
             await Promise.all(
-                renderings?.map((x) => this.getRendering(x)) ?? [],
+                renderingIds?.map((x) => this.getRendering(x)) ?? [],
             )
         ).filter((x) => typeof x !== 'undefined');
+
+        const queue = [...renderings];
+        const wildcardPlaceholders: string[] = [];
+        while (queue.length > 0) {
+            const component = queue.shift()!;
+            await this.fillRendering(
+                component,
+                renderings,
+                queue,
+                wildcardPlaceholders,
+            );
+        }
+
+        // cleanup & finalize
+        for (const component of renderings) {
+            delete component.placeholderSettingIds;
+            for (const placeholder of wildcardPlaceholders) {
+                if (
+                    !component.placement.allowedChildPlaceholders.includes(
+                        placeholder,
+                    )
+                ) {
+                    component.placement.allowedParentPlaceholders.push(
+                        placeholder,
+                    );
+                }
+            }
+        }
+        return renderings;
     }
 
-    async getRendering(id: string): Promise<Component | undefined> {
+    async fillRendering(
+        rendering: InternalComponent,
+        allRenderings: InternalComponent[],
+        queue: InternalComponent[],
+        wildcardPlaceholders: string[],
+    ) {
+        const placeholderSettingIds = rendering.placeholderSettingIds;
+        if (!placeholderSettingIds) {
+            return;
+        }
+
+        const placeholders = await Promise.all(
+            placeholderSettingIds.map((x) => getById(x, this.connection)),
+        );
+
+        for (const response of placeholders) {
+            const {
+                data: { item },
+            } = response;
+            const key = item?.fields.nodes.find(
+                (x) => x.name === 'Placeholder Key',
+            )?.value;
+            const allowedControls =
+                item?.fields.nodes
+                    .find((x) => x.name === 'Allowed Controls')
+                    ?.value?.split('|')
+                    .filter((x) => x) ?? [];
+            // const placeholder = key?.endsWith('-{*}')
+            //     ? key.slice(0, -4) + '__DYN'
+            //     : key;
+            const placeholder = key;
+            if (!placeholder) {
+                continue;
+            }
+
+            rendering.placement.allowedChildPlaceholders.push(placeholder);
+            if (allowedControls.length === 0) {
+                // need to allow all
+                wildcardPlaceholders.push(placeholder);
+                continue;
+            }
+
+            for (let i = 0; i < allowedControls.length; i++) {
+                const allowed = allowedControls[i];
+                const childRendering = allRenderings.find((x) =>
+                    uuidCompare(x.id, allowed),
+                );
+                if (childRendering) {
+                    childRendering.placement.allowedParentPlaceholders.push(
+                        placeholder,
+                    );
+                } else {
+                    const rendering = await this.getRendering(allowed, [
+                        placeholder,
+                    ]);
+                    if (rendering) {
+                        allRenderings.push(rendering);
+                        queue.push(rendering);
+                    }
+                }
+            }
+        }
+    }
+
+    async getRendering(
+        id: string,
+        allowedParentPlaceholders: string[] = ['__main__'],
+    ): Promise<InternalComponent | undefined> {
         const {
             data: { item },
         } = await getById(id, this.connection);
@@ -116,15 +222,19 @@ export class SitecoreGraphqlAuthoringComponentsProvider
         if (!item) {
             return undefined;
         }
-        const component: Component = {
+        const component: InternalComponent = {
             id: formatGuid(item.itemId),
             name: item.name,
             description: `Sitecore rendering under '${item.path.replace('/sitecore/layout/Renderings/', '')}'`,
             instructions: '',
             placement: {
                 allowedChildPlaceholders: [],
-                allowedParentPlaceholders: ['__main__'],
+                allowedParentPlaceholders,
             },
+            placeholderSettingIds: item.fields.nodes
+                .find((x) => x.name === 'Placeholders')
+                ?.value?.split('|')
+                .filter((x) => x),
         };
 
         // TODO: add support for branches
