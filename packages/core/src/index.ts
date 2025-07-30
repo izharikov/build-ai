@@ -193,7 +193,7 @@ async function fetchDataFromStorage(
     });
 }
 
-export type StateTypes = 'command' | 'step' | 'layout' | 'fetch';
+export type StateTypes = 'command' | 'step' | 'layout' | 'fetch' | 'open-link';
 
 export const generateLayout = async (
     chat: ChatContext,
@@ -206,7 +206,8 @@ export const generateLayout = async (
     const lastAssistantMessage = chat.messages.findLast(
         (x) => x.role === 'assistant',
     );
-    await fetchDataFromStorage(lastAssistantMessage, storage, 'layout');
+    // TODO: check if can be deleted
+    // await fetchDataFromStorage(lastAssistantMessage, storage, 'layout');
 
     const messages = customConvertMessages(chat.messages);
 
@@ -263,11 +264,12 @@ export const generateLayout = async (
             return;
         }
         try {
-            await processAndSaveLayout(
+            const res = await processAndSaveLayout(
                 layout,
                 resultProcessor,
                 componentsProvider,
             );
+            state('layout', { state: 'done', data: res });
         } catch (e) {
             state('command', {
                 state: 'done',
@@ -313,22 +315,22 @@ export const processAndSaveLayout = async (
     layout: LayoutResponseStream,
     resultProcessor: ResultProcessor<LayoutResult, GeneratedLayoutContext>,
     componentsProvider: ComponentsProvider,
-) =>
-    await resultProcessor.process(
-        {
-            name: itemName(layout.path ?? ''),
-            ...layout,
-            state: 'new',
-            main: layout.main as LayoutResult['main'],
+): Promise<LayoutResult> => {
+    const result = {
+        name: itemName(layout.path ?? ''),
+        ...layout,
+        state: 'new' as const,
+        main: layout.main as LayoutResult['main'],
+    };
+    await resultProcessor.process(result, {
+        layout: {
+            raw: () => '',
+            datasources: [],
         },
-        {
-            layout: {
-                raw: () => '',
-                datasources: [],
-            },
-            components: await componentsProvider.getComponents(),
-        },
-    );
+        components: await componentsProvider.getComponents(),
+    });
+    return result;
+};
 
 export const streamGenerateLayout = (
     chat: ChatContext,

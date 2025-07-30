@@ -11,7 +11,6 @@ import {
     ChainProcessor,
     SitecorePageToLayoutProcessor,
 } from '../src/processors';
-import { SitecorePageCreator } from '../src/processors/sitecore/SitecorePageCreator';
 
 dotenv.config({ path: findConfig('.env') ?? undefined });
 
@@ -21,6 +20,11 @@ const provider = new SitecoreGraphqlAuthoringComponentsProvider(
         baseUrl: process.env.SITECORE_GRAPHQL_BASE_URL!,
         settings: {
             availableRenderingNames: ['Page Content', 'Page Structure'],
+        },
+        additional: {
+            tenant: 'brimit14221-demo9d1d-dev2bfc',
+            site: 'blueprint',
+            organization: 'org_Ih9vHlhOvNqXRg7A',
         },
     },
     process.env.SITECORE_SITE!,

@@ -1,10 +1,10 @@
 import { useChat } from '@ai-sdk/react';
-import { ChooseStepResponse } from '@page-builder/core';
 import { InputMessage, Message } from './message';
 import { ChatTransport, UIMessage } from 'ai';
-import { getData } from '@/lib/react/useMessageData';
-import React from 'react';
+import React, { useState } from 'react';
 import { AgentMessage } from './message/agent';
+import { Text } from 'ink';
+import { getData } from '@/lib/react/useMessageData';
 
 export function Chat<UI_MESSAGE extends UIMessage>({
     transport,
@@ -27,32 +27,43 @@ export function Chat<UI_MESSAGE extends UIMessage>({
             setError(error.message);
         },
     });
+    const [layoutScrollEnabled, setLayoutScrollEnabled] = useState(true);
 
-    const computedFlowState = getData<ChooseStepResponse>(
-        messages.findLast((x) => x.role === 'assistant'),
-        'step',
+    const openLink = messages
+        .map((x) => getData(x, 'layout'))
+        .findLast((x) => x)?.['openLink'] as string | undefined;
+
+    const expandEnabled = messages.some(
+        (x) =>
+            x.role === 'assistant' &&
+            x.parts.some((y) => y.type === 'data-layout'),
     );
 
-    const commands =
-        computedFlowState?.step === 'generate'
+    const expandSteps = expandEnabled
+        ? [
+              {
+                  name: 'ui_expand',
+                  description: 'Expand the layout',
+              },
+          ]
+        : [];
+
+    const commands = [
+        {
+            name: 'save',
+            description: 'Save the page',
+            confirmation: true,
+        },
+        ...expandSteps,
+        ...(openLink
             ? [
                   {
-                      name: 'save',
-                      description: 'Save the page',
-                      confirmation: true,
-                  },
-                  {
-                      name: 'ui_expand',
-                      description: 'Expand the layout',
+                      name: 'ui_open',
+                      description: 'Open layout',
                   },
               ]
-            : [
-                  {
-                      name: 'save',
-                      description: 'Save the page',
-                      confirmation: true,
-                  },
-              ];
+            : []),
+    ];
 
     return (
         <>
@@ -72,16 +83,36 @@ export function Chat<UI_MESSAGE extends UIMessage>({
                               x.parts.some((y) => y.type === 'data-layout'),
                       )
                     : undefined;
+                const streaming =
+                    chatStatus === 'streaming' && index === messages.length - 1;
                 return (
                     <React.Fragment key={message.id}>
-                        <Message message={message} />
+                        <Message message={message} streaming={streaming} />
                         {uiCommand && (
                             <>
                                 {command === 'expand' && lastPageMsg && (
-                                    <AgentMessage
-                                        message={lastPageMsg}
-                                        layoutMode="full"
-                                    />
+                                    <>
+                                        {index === messages.length - 1 && (
+                                            <AgentMessage
+                                                message={lastPageMsg}
+                                                layoutMode="full"
+                                                streaming={streaming}
+                                                layoutScrollEnabled={
+                                                    layoutScrollEnabled &&
+                                                    index ===
+                                                        messages.length - 1
+                                                }
+                                            />
+                                        )}
+                                        {index !== messages.length - 1 && (
+                                            <Text color="gray">
+                                                [Expanded view]
+                                            </Text>
+                                        )}
+                                    </>
+                                )}
+                                {command === 'open' && lastPageMsg && (
+                                    <Text>Open requested: {openLink}</Text>
                                 )}
                             </>
                         )}
@@ -92,6 +123,9 @@ export function Chat<UI_MESSAGE extends UIMessage>({
                                     sendMessage={sendMessage}
                                     placeholder="Type your message here... (or / to choose command)"
                                     commands={commands}
+                                    onCommandShown={(x) =>
+                                        setLayoutScrollEnabled(!x)
+                                    }
                                 />
                             )}
                     </React.Fragment>

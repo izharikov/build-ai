@@ -16,6 +16,7 @@ export type LayoutResult = {
     title: string;
     description: string;
     main: LayoutComponent[];
+    openLink?: string;
 };
 
 export type DatasourceItem = {

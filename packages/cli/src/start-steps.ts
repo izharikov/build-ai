@@ -21,6 +21,8 @@ import {
 import { jwtDecode, JwtPayload } from 'jwt-decode';
 import fs from 'fs/promises';
 
+// TODO: move to core package
+
 type Platform = 'sitecore';
 
 type PageBuilderConfig = {
@@ -29,6 +31,8 @@ type PageBuilderConfig = {
     sitecore?: {
         useDotEnv: boolean;
         site: string;
+        tenant?: string;
+        organization?: string;
         graphql: {
             baseUrl: string;
             accessToken?: string;
@@ -109,11 +113,18 @@ function createComponentsProvider(
                             'Page Structure',
                         ],
                     },
+                    additional:
+                        sitecore.tenant && sitecore.organization
+                            ? {
+                                  tenant: sitecore.tenant,
+                                  site: sitecore.site,
+                                  organization: sitecore.organization,
+                              }
+                            : undefined,
                 },
                 sitecore.site as string,
             ),
             ['.sitecore', sitecore.site as string],
-            true,
         );
     }
 
@@ -143,6 +154,14 @@ function createSaveProcessor(
                             'Page Structure',
                         ],
                     },
+                    additional:
+                        sitecore.tenant && sitecore.organization
+                            ? {
+                                  tenant: sitecore.tenant,
+                                  site: sitecore.site,
+                                  organization: sitecore.organization,
+                              }
+                            : undefined,
                 },
                 {
                     pageTemplateId: sitecore.pageTemplateId,

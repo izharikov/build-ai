@@ -48,10 +48,14 @@ export function AgentMessage({
     message,
     setFlowState,
     layoutMode = 'minimal',
+    streaming,
+    layoutScrollEnabled,
 }: {
     message: UIMessage;
     setFlowState?: (state: string) => void;
     layoutMode?: 'minimal' | 'full';
+    streaming: boolean;
+    layoutScrollEnabled?: boolean;
 }) {
     const { data: command, state: commandState } = useMessageData<CommandState>(
         message,
@@ -69,32 +73,39 @@ export function AgentMessage({
         }
     }, [step, setFlowState]);
 
+    const text = message.parts
+        .map((x) => x.type === 'text' && x.text)
+        .filter((x) => x)
+        .join(' ');
+
     return (
         <>
-            {message.id !== 'internal' && (
-                <Text color="blue">{`A [${message.id}]:`}</Text>
+            <Text color="blue">{`A : ${text}`}</Text>
+            {streaming && !command && step === undefined && (
+                <Spinner label="Loading..." />
             )}
             {command && <Command command={command} state={commandState} />}
             {step?.step === 'refine' && (
                 <Text color="blue">
-                    {`A: `} {step.layoutContent} {`\n`}
+                    {`A: `} [{step.layoutContent}] {`\n`}
                     {step.question}
                 </Text>
             )}
+            <>
+                {layout && layoutMode === 'full' && (
+                    <LayoutPreview
+                        id="layout"
+                        layout={layout}
+                        hideCommands
+                        disabled={!layoutScrollEnabled}
+                    />
+                )}
+            </>
             {step?.step === 'generate' && (
                 <Box flexDirection="column">
                     {(state === 'loading' || state === 'streaming') && (
                         <Spinner label="Generating page..." />
                     )}
-                    <>
-                        {layout && layoutMode === 'full' && (
-                            <LayoutPreview
-                                id="layout"
-                                layout={layout}
-                                hideCommands
-                            />
-                        )}
-                    </>
                     {state === 'done' && (
                         <Text color="green">
                             Layout generated successfully!

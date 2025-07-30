@@ -52,6 +52,8 @@ export class SitecorePageCreator<
         if ('data' in finalResult) {
             result.state = 'saved';
             result.itemId = finalResult?.data?.updateItem?.item?.itemId;
+            const additional = this.connection.additional;
+            result.openLink = `https://pages.sitecorecloud.io/editor?organization=${additional?.organization}&tenantName=${additional?.tenant}&sc_itemid=${result.itemId}&sc_lang=en&sc_site=${additional?.site}&sc_version=1`;
         }
     }
 

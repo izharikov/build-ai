@@ -6,6 +6,11 @@ export type SitecoreConnection = {
     settings: {
         availableRenderingNames: string[];
     };
+    additional?: {
+        tenant: string;
+        site: string;
+        organization: string;
+    };
 };
 
 export type GqlResponse<T> = {

@@ -1,5 +1,3 @@
-import { streamObject } from 'ai';
-import { openai } from '@ai-sdk/openai';
 import dotenv from 'dotenv';
 import { layoutStructureSchema } from '../src/helpers/schema-generator';
 import { objectSchema } from '../src/lib/ai';
@@ -17,6 +15,11 @@ const provider = new SitecoreGraphqlAuthoringComponentsProvider(
         baseUrl: process.env.SITECORE_GRAPHQL_BASE_URL!,
         settings: {
             availableRenderingNames: ['Page Content', 'Page Structure'],
+        },
+        additional: {
+            tenant: 'brimit14221-demo9d1d-dev2bfc',
+            site: 'blueprint',
+            organization: 'org_Ih9vHlhOvNqXRg7A',
         },
     },
     site,
@@ -38,6 +41,7 @@ const { schema, registry } = layoutStructureSchema(
 console.log('... Generate object');
 
 const finalSchema = objectSchema(schema, registry);
+console.log(finalSchema);
 
 // const stream = streamObject({
 //     model: openai('gpt-4.1-mini'),

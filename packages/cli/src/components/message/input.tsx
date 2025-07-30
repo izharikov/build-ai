@@ -1,6 +1,6 @@
 import { Select, TextInput } from '@inkjs/ui';
 import { Box, Spacer, Text } from 'ink';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 type CommandOption = {
     name: string;
@@ -33,7 +33,9 @@ export function InputMessage({
     const [commandSelected, setCommandSelected] = useState<boolean>(false);
     const [inputEnabled, setInputEnabled] = useState(true);
     const showCommands = commands.length > 0 && input.startsWith('/');
-    onCommandShown?.(showCommands);
+    useEffect(() => {
+        onCommandShown?.(showCommands);
+    }, [input, commands]);
     const enteredCommand = showCommands ? input.substring(1) : '';
     const filteredCommands = showCommands
         ? commands.filter((x) => x.name.startsWith(enteredCommand))

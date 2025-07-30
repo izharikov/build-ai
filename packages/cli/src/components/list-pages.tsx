@@ -3,7 +3,6 @@ import { Option, Select, Spinner } from '@inkjs/ui';
 import { LayoutResult } from '@page-builder/core/processors';
 import { Storage } from '@page-builder/core/storage';
 import { useState } from 'react';
-import { LayoutPreview } from './message/layout-preview';
 import { Chat } from './chat';
 import { ChatTransport, UIMessage } from 'ai';
 import { Text } from 'ink';
@@ -41,7 +40,7 @@ export function ListPages({
             data
                 .filter((x) => x)
                 .map((x) => ({
-                    label: `${x!.title} [${x!.id}]`,
+                    label: `[${x!.id}] '${x!.title}' -> ${x?.state}`,
                     value: x!.id || '',
                 }))) ||
         [];
@@ -58,8 +57,6 @@ export function ListPages({
         [pageId],
         setError,
     );
-
-    const [command, setCommand] = useState<{ name: string; args: string[] }>();
 
     return (
         <>
@@ -79,33 +76,28 @@ export function ListPages({
                     />
                     {layoutLoading === 'done' && layout && (
                         <>
-                            <LayoutPreview
-                                layout={layout}
-                                id={pageId}
-                                onCommand={(name, args) =>
-                                    setCommand({ name, args })
-                                }
-                            />
-                            {command && command.name === 'chat' && (
-                                <Chat
-                                    transport={transport}
-                                    originalMessages={[
-                                        {
-                                            id: 'internal',
-                                            role: 'assistant',
-                                            parts: [
-                                                {
-                                                    type: 'data-fetch',
-                                                    data: {
-                                                        data: command.args[0],
-                                                    },
+                            <Chat
+                                transport={transport}
+                                originalMessages={[
+                                    {
+                                        id: 'internal',
+                                        role: 'assistant',
+                                        parts: [
+                                            {
+                                                type: 'data-layout',
+                                                data: {
+                                                    data: layout,
                                                 },
-                                            ],
-                                        },
-                                    ]}
-                                    setError={setError}
-                                />
-                            )}
+                                            },
+                                            {
+                                                type: 'text',
+                                                text: `Type your message to view or edit the layout:`,
+                                            },
+                                        ],
+                                    },
+                                ]}
+                                setError={setError}
+                            />
                         </>
                     )}
                 </>

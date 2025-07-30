@@ -3,7 +3,7 @@ import { LayoutComponent, LayoutResult } from '@page-builder/core/processors';
 import { Box, Text } from 'ink';
 import { InputMessage } from './input';
 import React, { useState } from 'react';
-import { ScrollArea } from '../ScrollArea';
+import { ScrollArea } from '../scroll-area';
 
 export function BoxComponentPreview({
     component,
@@ -132,11 +132,13 @@ export function LayoutPreview({
     layout,
     onCommand,
     hideCommands,
+    disabled,
 }: {
     id: string;
     layout: DeepPartial<LayoutResult>;
     onCommand?: (command: string, args: string[]) => void;
     hideCommands?: boolean;
+    disabled?: boolean;
 }) {
     const components = Object.values(layout.main || {});
 
@@ -144,7 +146,10 @@ export function LayoutPreview({
     const [commandShown, setCommandShown] = useState<boolean>(false);
     return (
         <>
-            <ScrollArea height={20} disabled={commandSelected || commandShown}>
+            <ScrollArea
+                height={20}
+                disabled={commandSelected || commandShown || disabled}
+            >
                 <Text>{layout.title}</Text>
                 <Text>
                     {`├── `}
@@ -177,10 +182,6 @@ export function LayoutPreview({
                             {
                                 name: 'chat',
                                 description: 'Start a chat (to edit layout)',
-                            },
-                            {
-                                name: 'test',
-                                description: 'Test',
                             },
                         ]}
                         onCommandShown={setCommandShown}

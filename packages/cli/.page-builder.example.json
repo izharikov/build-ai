@@ -4,6 +4,8 @@
     "sitecore": {
         "useDotEnv": true,
         "site": "blueprint",
+        "tenant": "brimit14221-demo9d1d-dev2bfc",
+        "organization": "org_Ih9vHlhOvNqXRg7A",
         "graphql": {
             "baseUrl": "https://xmc-brimit14221-demo9d1d-dev2bfc.sitecorecloud.io/"
         },
