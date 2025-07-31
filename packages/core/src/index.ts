@@ -173,26 +173,6 @@ function getLastDataStream<T>(
     }
 }
 
-async function fetchDataFromStorage(
-    message: UIMessage | undefined,
-    storage: Storage<unknown>,
-    type: StateTypes,
-) {
-    if (message?.role !== 'assistant' || message.parts.length > 1) {
-        return;
-    }
-    const layoutId = getLastDataStream<string>([message], 'fetch');
-    if (!layoutId) {
-        return;
-    }
-    const layout = await storage.get(layoutId);
-    message.parts.push({
-        type: `data-${type}`,
-        id: type,
-        data: { data: layout, state: 'done' },
-    });
-}
-
 export type StateTypes = 'command' | 'step' | 'layout' | 'fetch' | 'open-link';
 
 export const generateLayout = async (
@@ -203,11 +183,6 @@ export const generateLayout = async (
     resultProcessor: ResultProcessor<LayoutResult, GeneratedLayoutContext>,
 ) => {
     const lastUserMessage = chat.messages.findLast((x) => x.role === 'user');
-    const lastAssistantMessage = chat.messages.findLast(
-        (x) => x.role === 'assistant',
-    );
-    // TODO: check if can be deleted
-    // await fetchDataFromStorage(lastAssistantMessage, storage, 'layout');
 
     const messages = customConvertMessages(chat.messages);
 
@@ -355,4 +330,5 @@ export const streamGenerateLayout = (
     });
 };
 
-export * from './util';
+export * as utils from './util';
+export * as initializer from './initializer';
