@@ -1,10 +1,31 @@
 import { useChat } from '@ai-sdk/react';
 import { InputMessage, Message } from './message';
 import { ChatTransport, UIMessage } from 'ai';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AgentMessage } from './message/agent';
 import { Text } from 'ink';
 import { getData } from '@/lib/react/useMessageData';
+import open from 'open';
+import { Spinner } from '@inkjs/ui';
+
+function OpenLink({ openLink }: { openLink: string }) {
+    const [isOpened, setIsOpened] = useState(false);
+    useEffect(() => {
+        async function executeOpen() {
+            await open(openLink);
+            setIsOpened(true);
+        }
+        executeOpen();
+    }, [setIsOpened]);
+    return (
+        <>
+            {isOpened && (
+                <Text color="green">✔ Link opened in your browser.</Text>
+            )}
+            {!isOpened && <Spinner label="Opening link..." />}
+        </>
+    );
+}
 
 export function Chat<UI_MESSAGE extends UIMessage>({
     transport,
@@ -111,9 +132,11 @@ export function Chat<UI_MESSAGE extends UIMessage>({
                                         )}
                                     </>
                                 )}
-                                {command === 'open' && lastPageMsg && (
-                                    <Text>Open requested: {openLink}</Text>
-                                )}
+                                {command === 'open' &&
+                                    openLink &&
+                                    lastPageMsg && (
+                                        <OpenLink openLink={openLink} />
+                                    )}
                             </>
                         )}
                         {/* needs to be here to rerender after messages changed */}

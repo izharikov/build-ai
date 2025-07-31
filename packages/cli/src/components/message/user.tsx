@@ -7,7 +7,7 @@ export function UserMessage({ message }: { message: UIMessage }) {
         .join('');
     return (
         <Text>
-            {`U [${message.id}]: `} {text}
+            {`U: `} {text}
         </Text>
     );
 }
