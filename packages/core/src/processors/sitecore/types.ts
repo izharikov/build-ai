@@ -33,5 +33,8 @@ export type GeneratedLayoutContext = {
         raw: (mailPlaceholder?: string) => string;
         datasources: DatasourceItem[];
     };
+} & BaseLayoutContext;
+
+export type BaseLayoutContext = {
     components: Component[];
 };

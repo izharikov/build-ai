@@ -3,8 +3,10 @@ import {
     ChainProcessor,
     GeneratedLayoutContext,
     LayoutResult,
+    ResultProcessorGeneric,
     SitecorePageCreator,
     SitecorePageToLayoutProcessor,
+    StorageContextProcessor,
     StorageProcessor,
 } from './processors';
 import { FileStorage, Storage } from './storage';
@@ -15,8 +17,11 @@ import {
 } from './components';
 import fs from 'fs/promises';
 import { utils } from '.';
+import { SendComponentsProvider } from './components/send/SendComponentsProvider';
+import { SendPageCreator } from './processors/send/SendEmailCreator';
+import { SendLayoutContext } from './processors/send/types';
 
-export type Platform = 'sitecore';
+export type Platform = 'sitecore' | 'send';
 
 export type PageBuilderConfig = {
     platform: Platform;
@@ -85,6 +90,8 @@ export function validateConfig(config: PageBuilderConfig) {
             checkNotEmpty(sitecore.parentItemId, 'parentItemId');
             checkNotEmpty(sitecore.mainPlaceholder, 'mainPlaceholder');
             break;
+        case 'send':
+            return;
         default:
             throw new Error('Unknown preset');
     }
@@ -121,6 +128,10 @@ export function createComponentsProvider(
         );
     }
 
+    if (config.platform === 'send') {
+        return new SendComponentsProvider();
+    }
+
     return {
         getComponents: async () => [],
     };
@@ -142,7 +153,7 @@ export async function createStorage(config: PageBuilderConfig) {
 export function createSaveProcessor(
     config: PageBuilderConfig,
     storage: Storage<LayoutResult>,
-) {
+): ResultProcessorGeneric<LayoutResult> {
     if (config.platform === 'sitecore') {
         const sitecore = config.sitecore!;
         return new ChainProcessor([
@@ -177,6 +188,20 @@ export function createSaveProcessor(
                 },
             ),
             new StorageProcessor<LayoutResult, GeneratedLayoutContext>(storage),
+        ]);
+    }
+    if (config.platform === 'send') {
+        return new ChainProcessor([
+            new SendPageCreator(),
+            new StorageContextProcessor<
+                LayoutResult,
+                SendLayoutContext,
+                SendLayoutContext['result']
+            >(
+                new FileStorage(['.' + config.platform, 'context']),
+                (x) => x.result,
+            ),
+            new StorageProcessor<LayoutResult, SendLayoutContext>(storage),
         ]);
     }
     throw new Error('Not implemented');
@@ -259,4 +284,34 @@ export async function loadPageBuilderJson(
     }
 
     return config;
+}
+
+export async function createContext(
+    config: PageBuilderConfig,
+    componentsProvider: ComponentsProvider,
+) {
+    const components = await componentsProvider.getComponents();
+    if (config.platform === 'sitecore') {
+        return {
+            layout: {
+                raw: () => '',
+                datasources: [],
+            },
+            components,
+        } as GeneratedLayoutContext;
+    }
+    if (config.platform === 'send') {
+        return {
+            result: {
+                json: {
+                    rows: [],
+                },
+                mobile: {
+                    rows: [],
+                },
+            },
+            components,
+        } as SendLayoutContext;
+    }
+    throw new Error('Not implemented');
 }

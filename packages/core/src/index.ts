@@ -17,10 +17,7 @@ import {
 } from './lib/ai';
 import { ComponentsProvider } from './components';
 import { Storage } from './storage';
-import {
-    GeneratedLayoutContext,
-    LayoutResult,
-} from './processors/sitecore/types';
+import { LayoutResult } from './processors/sitecore/types';
 import { ResultProcessor } from './processors';
 import { itemName } from './lib';
 import Exa from 'exa-js';
@@ -175,13 +172,14 @@ function getLastDataStream<T>(
 
 export type StateTypes = 'command' | 'step' | 'layout' | 'fetch' | 'open-link';
 
-export const generateLayout = async (
+export async function generateLayout<T>(
     chat: ChatContext,
     writer: UIMessageStreamWriter,
     componentsProvider: ComponentsProvider,
     storage: Storage<unknown>,
-    resultProcessor: ResultProcessor<LayoutResult, GeneratedLayoutContext>,
-) => {
+    resultProcessor: ResultProcessor<LayoutResult, T>,
+    createContext: () => Promise<T>,
+) {
     const lastUserMessage = chat.messages.findLast((x) => x.role === 'user');
 
     const messages = customConvertMessages(chat.messages);
@@ -242,7 +240,7 @@ export const generateLayout = async (
             const res = await processAndSaveLayout(
                 layout,
                 resultProcessor,
-                componentsProvider,
+                createContext,
             );
             state('layout', { state: 'done', data: res });
         } catch (e) {
@@ -284,43 +282,40 @@ export const generateLayout = async (
     await writeObjectStream('layout', stream);
     const layout = await stream.object;
     await storage.save(itemName(layout.path ?? ''), layout);
-};
+}
 
-export const processAndSaveLayout = async (
+export async function processAndSaveLayout<T>(
     layout: LayoutResponseStream,
-    resultProcessor: ResultProcessor<LayoutResult, GeneratedLayoutContext>,
-    componentsProvider: ComponentsProvider,
-): Promise<LayoutResult> => {
+    resultProcessor: ResultProcessor<LayoutResult, T>,
+    createContext: () => Promise<T>,
+): Promise<LayoutResult> {
     const result = {
         name: itemName(layout.path ?? ''),
         ...layout,
         state: 'new' as const,
         main: layout.main as LayoutResult['main'],
     };
-    await resultProcessor.process(result, {
-        layout: {
-            raw: () => '',
-            datasources: [],
-        },
-        components: await componentsProvider.getComponents(),
-    });
+    await resultProcessor.process(result, await createContext());
     return result;
-};
+}
 
-export const streamGenerateLayout = (
+export function streamGenerateLayout<T>(
     chat: ChatContext,
     componentsProvider: ComponentsProvider,
     storage: Storage<unknown>,
-    resultProcessor: ResultProcessor<LayoutResult, GeneratedLayoutContext>,
-) => {
+    resultProcessor: ResultProcessor<LayoutResult, T>,
+    createContext: () => Promise<T>,
+) {
     return createUIMessageStream({
         execute: async ({ writer }) => {
+            console.log('execute');
             await generateLayout(
                 chat,
                 writer,
                 componentsProvider,
                 storage,
                 resultProcessor,
+                createContext,
             );
         },
         onError: (error) => {
@@ -328,7 +323,7 @@ export const streamGenerateLayout = (
             return message || 'An error occurred while processing the layout.';
         },
     });
-};
+}
 
 export * as utils from './util';
 export * as initializer from './initializer';

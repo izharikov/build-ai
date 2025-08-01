@@ -2,11 +2,7 @@ import { Prompts, streamGenerateLayout } from '@page-builder/core';
 import { StreamChatTransport } from './lib/StreamChatTransport';
 import { ChatTransport, UIMessage } from 'ai';
 import { Storage } from '@page-builder/core/storage';
-import {
-    GeneratedLayoutContext,
-    LayoutResult,
-    ResultProcessor,
-} from '@page-builder/core/processors';
+import { LayoutResult, ResultProcessor } from '@page-builder/core/processors';
 import { ComponentsProvider } from '@page-builder/core/components';
 import { initializer } from '@page-builder/core';
 import dotenv from 'dotenv';
@@ -18,7 +14,7 @@ export function initialSteps(configFile?: string) {
     let storage: Storage<LayoutResult>;
     let componentsProvider: ComponentsProvider;
     let config: initializer.PageBuilderConfig;
-    let saveProcessor: ResultProcessor<LayoutResult, GeneratedLayoutContext>;
+    let saveProcessor: ResultProcessor<LayoutResult, unknown>;
     return {
         steps: [
             {
@@ -78,6 +74,11 @@ export function initialSteps(configFile?: string) {
                             componentsProvider,
                             storage,
                             saveProcessor,
+                            () =>
+                                initializer.createContext(
+                                    config,
+                                    componentsProvider,
+                                ),
                         ),
                     );
                 },

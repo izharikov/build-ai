@@ -30,7 +30,7 @@
     "build": "pnpm clean && tsup",
     "build:dev": "pnpm clean && tsc --emitDeclarationOnly && tsup",
     "clean": "rimraf dist",
-    "helper:test": "tsx temp-run/test-schema.ts",
+    "helper:run": "tsx temp-run/test-run.ts",
     "helper:gql": "tsx temp-run/test-gql.ts"
   },
   "keywords": [],

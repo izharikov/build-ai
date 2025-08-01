@@ -104,8 +104,8 @@ export function Chat<UI_MESSAGE extends UIMessage>({
                               x.parts.some((y) => y.type === 'data-layout'),
                       )
                     : undefined;
-                const streaming =
-                    chatStatus === 'streaming' && index === messages.length - 1;
+                const isLastMessage = index === messages.length - 1;
+                const streaming = chatStatus === 'streaming' && isLastMessage;
                 return (
                     <React.Fragment key={message.id}>
                         <Message message={message} streaming={streaming} />
@@ -113,7 +113,7 @@ export function Chat<UI_MESSAGE extends UIMessage>({
                             <>
                                 {command === 'expand' && lastPageMsg && (
                                     <>
-                                        {index === messages.length - 1 && (
+                                        {isLastMessage && (
                                             <AgentMessage
                                                 message={lastPageMsg}
                                                 layoutMode="full"
@@ -125,7 +125,7 @@ export function Chat<UI_MESSAGE extends UIMessage>({
                                                 }
                                             />
                                         )}
-                                        {index !== messages.length - 1 && (
+                                        {!isLastMessage && (
                                             <Text color="gray">
                                                 [Expanded view]
                                             </Text>
@@ -135,7 +135,17 @@ export function Chat<UI_MESSAGE extends UIMessage>({
                                 {command === 'open' &&
                                     openLink &&
                                     lastPageMsg && (
-                                        <OpenLink openLink={openLink} />
+                                        <>
+                                            {isLastMessage && (
+                                                <OpenLink openLink={openLink} />
+                                            )}
+                                            {!isLastMessage && (
+                                                <Text>
+                                                    ✔ Link opened in your
+                                                    browser.
+                                                </Text>
+                                            )}
+                                        </>
                                     )}
                             </>
                         )}
