@@ -27,13 +27,19 @@ function getDatasourceSchema(component: Component) {
         fields[`__type__${key}`] = z.literal(field.type);
         switch (field.type) {
             case 'text':
-                fields[key] = z.string().describe('Text value');
+                fields[key] = z
+                    .string()
+                    .describe(field.description ?? 'Text value');
                 break;
             case 'number':
-                fields[key] = z.number().describe('Numeric value');
+                fields[key] = z
+                    .number()
+                    .describe(field.description ?? 'Numeric value');
                 break;
             case 'image':
-                fields[key] = z.string().describe('Image URL');
+                fields[key] = z
+                    .string()
+                    .describe(field.description ?? 'Image Description');
                 break;
             case 'checkbox':
                 fields[key] = z.boolean();
@@ -45,10 +51,14 @@ function getDatasourceSchema(component: Component) {
                 fields[key] = z.array(z.string());
                 break;
             case 'html':
-                fields[key] = z.string().describe('HTML field content');
+                fields[key] = z
+                    .string()
+                    .describe(field.description ?? 'HTML field content');
                 break;
             case 'date':
-                fields[key] = z.iso.datetime().describe('Date value');
+                fields[key] = z.iso
+                    .datetime()
+                    .describe(field.description ?? 'Date value');
                 break;
         }
     }

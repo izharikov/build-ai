@@ -105,7 +105,13 @@ export class SendComponentsProvider implements ComponentsProvider {
                 datasource: {
                     templateId: '_',
                     name: 'Image',
-                    fields: [{ name: 'image', type: 'image' }],
+                    fields: [
+                        {
+                            name: 'alt',
+                            type: 'image',
+                            description: 'Image description (alt text), NO url',
+                        },
+                    ],
                 },
                 placement: componentPlacement,
             },
@@ -121,6 +127,35 @@ export class SendComponentsProvider implements ComponentsProvider {
                         { name: 'new_window', type: 'checkbox' },
                     ],
                 },
+                placement: componentPlacement,
+            },
+            {
+                id: 'spacer',
+                name: 'spacer',
+                description: 'Spacer',
+                datasource: {
+                    templateId: '_',
+                    name: 'Spacer',
+                    fields: [
+                        {
+                            name: 'height',
+                            type: 'number',
+                            description: 'spacer height, default to 40.',
+                        },
+                    ],
+                },
+                placement: componentPlacement,
+            },
+            {
+                id: 'social_share',
+                name: 'social_share',
+                description: 'Social Share (share this email or some link)',
+                placement: componentPlacement,
+            },
+            {
+                id: 'social_follow',
+                name: 'social_follow',
+                description: 'Social Follow (follow section in the footer)',
                 placement: componentPlacement,
             },
         ];

@@ -14,7 +14,8 @@ AI Layout Builder is a tool that helps you create a page for a blog or website b
 - [x] actions based on state (new, saved => preview link in pages)
 - [x] move init to core package
 - [x] add open url support
-- [ ] Send support
+- [x] Send support
+- [ ] use default promtps based on platform
 - [ ] add non-interactive support
-- [ ] use https://placehold.co/600x400?text=Hello+World
+- [x] use https://placehold.co/600x400?text=Hello+World
 - [ ] add correct graphql support

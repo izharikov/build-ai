@@ -26,8 +26,8 @@ function getFieldType(field: GqlItemField): Field['type'] {
             return 'select';
         case 'Multi-List':
             return 'multi-select';
-        case 'Image':
-            return 'image';
+        case 'Image': // Currently we are not generating images
+            return '_unknown_';
         case 'General Link':
         case 'General Link with Search':
             return 'link';
@@ -278,7 +278,8 @@ export class SitecoreGraphqlAuthoringComponentsProvider
                         .map((x) => ({
                             name: x.name,
                             type: getFieldType(x),
-                        })),
+                        }))
+                        .filter((x) => x.type !== '_unknown_'),
                 };
             }
         }

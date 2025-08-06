@@ -21,6 +21,7 @@ export type Datasource = {
 
 export type Field = {
     name: string;
+    description?: string;
     type:
         | 'text'
         | 'number'
@@ -30,7 +31,8 @@ export type Field = {
         | 'multi-select'
         | 'html'
         | 'date'
-        | 'link';
+        | 'link'
+        | '_unknown_';
 };
 
 export interface ComponentsProvider {

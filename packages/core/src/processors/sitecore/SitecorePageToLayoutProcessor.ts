@@ -86,7 +86,10 @@ export class SitecorePageToLayoutProcessor<
             )!;
             let ds: DatasourceItem | undefined = undefined;
             if (component.datasource && realComponent.datasource?.templateId) {
-                const existingDs = { ...component.datasource };
+                const existingDs = {
+                    ...component.datasource,
+                    fields: { ...component.datasource?.fields },
+                };
                 for (const k in existingDs.fields) {
                     if (k.startsWith('__type')) {
                         delete existingDs.fields[k];

@@ -304,9 +304,11 @@ export async function createContext(
         return {
             result: {
                 json: {
+                    ...SendPageCreator.defaultResultOptions,
                     rows: [],
                 },
                 mobile: {
+                    ...SendPageCreator.defaultResultOptions,
                     rows: [],
                 },
             },
