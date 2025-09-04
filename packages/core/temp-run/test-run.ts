@@ -65,29 +65,9 @@ export async function handleStream() {
                 },
             ],
             prompts: {
+                ...(await initializer.readPrompts(config)),
                 chooseStep: {
-                    system: `Directly 'generate'`,
-                },
-                generateLayout: {
-                    system: `Generate the layout for email. Add minimum 10 components
-Use the following high level structure:
-- Navigation
-- Header
-- Main content area with lots of media and CTAs
-- Footer with social media links
-- Legal information
-
-## Rules
-- use Spacer to logically separate components
-- for Navigation use FOUR_ONE_FOURTHS component (and then each nav item in separated placeholder)
-        
-## Tools
-- Use web_search to find the best content for the layout + add additional links or context.
-
-{{globalContext}}
-
-{{timeContext}}
-                `,
+                    system: `Directly 'generate'.`,
                 },
             },
         },

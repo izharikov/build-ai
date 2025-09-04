@@ -21,8 +21,17 @@ import { LayoutResult } from './processors/sitecore/types';
 import { ResultProcessor } from './processors';
 import { itemName } from './lib';
 import Exa from 'exa-js';
+import { Platform } from './initializer';
 
-const model = openai('gpt-4.1-mini');
+const getModel = () => {
+    const provider = process.env.AI_PROVIDER || 'openai';
+    const model = process.env.AI_MODEL || 'gpt-4.1-mini';
+    if (provider === 'openai') {
+        return openai(model);
+    }
+
+    return openai(model);
+};
 
 export type Prompts = {
     chooseStep: {
@@ -42,7 +51,7 @@ export type CommandState = {
     result?: string;
 };
 
-export const defaultPrompts: Prompts = {
+const sitecoreDefaultPrompts: Prompts = {
     chooseStep: {
         system: `
         ## Instructions
@@ -82,12 +91,60 @@ Generate the layout based on user requirements.
     },
 };
 
+const sendDefaultPrompts: Prompts = {
+    chooseStep: {
+        system: `## Instructions
+        Based on conversation, choose the best step to take next.
+
+        You are very first and important part of the system, the final goal is to generate the layout.
+
+        Choose 'generate' step if ALL the following:
+        - content of the layout is clear: topic, target audience, style, etc.
+        - quick summary of content is approved by the user
+
+        If any of the above is not true, choose 'refine' step.
+               `,
+    },
+    generateLayout: {
+        system: `Generate the layout for email. Add minimum 10 components
+Use the following high level structure:
+- Navigation
+- Header
+- Main content area with lots of media and CTAs
+- Footer with social media links
+- Legal information
+
+## Rules
+- use Spacer to logically separate components
+- for Navigation use FOUR_ONE_FOURTHS component (and then each nav item in separated placeholder)
+        
+## Tools
+- Use web_search to find the best content for the layout + add additional links or context.
+
+{{globalContext}}
+
+{{timeContext}}`,
+    },
+};
+
+export const getDefaultPrompts = (platform: Platform) => {
+    switch (platform) {
+        case 'sitecore':
+            return sitecoreDefaultPrompts;
+        case 'send':
+            return sendDefaultPrompts;
+        default:
+            throw new Error('Unknown platform');
+    }
+};
+
 export type ChatContext = {
     messages: UIMessage[];
     prompts: Prompts;
 };
 
 function chooseStep(chat: ChatContext, messages: ModelMessage[]) {
+    const model = getModel();
     return generateObjectStream({
         model,
         messages,
@@ -126,6 +183,7 @@ function layoutStream(
     registry: LayoutStructureSchema['registry'],
 ) {
     const exa = new Exa(process.env.EXA_API_KEY);
+    const model = getModel();
     return generateObjectStream({
         model,
         messages,

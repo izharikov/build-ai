@@ -1,0 +1,9 @@
+{
+    "platform": "send",
+    "storage": "local",
+    "loadDotEnv": true,
+    "env": {
+        "OPENAI_API_KEY": "",
+        "EXA_API_KEY_": ""
+    }
+}

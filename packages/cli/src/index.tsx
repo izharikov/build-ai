@@ -11,6 +11,7 @@ import { ChatTransport, UIMessage } from 'ai';
 import { initialSteps } from './start-steps';
 import { LayoutResult } from '@page-builder/core/processors';
 import { Storage } from '@page-builder/core/storage';
+import meow from 'meow';
 
 type AppProps = {
     steps: StepType[];
@@ -72,10 +73,29 @@ const App = (props: AppProps) => {
         </Box>
     );
 };
+
+const cli = meow(
+    `
+	Usage
+	  $ npx @page-builder/cli [options]
+
+	Options
+	  --config, -c  config file path (default: config.json)
+`,
+    {
+        importMeta: import.meta, // This is required
+        flags: {
+            config: {
+                type: 'string',
+                shortFlag: 'c',
+                default: 'config.json',
+            },
+        },
+    },
+);
+
 async function start() {
-    const { steps, transport, storage } = initialSteps(
-        '.page-builder.example.json',
-    );
+    const { steps, transport, storage } = initialSteps(cli.flags.config);
     render(<App steps={steps} transport={transport} storage={storage} />);
 }
 

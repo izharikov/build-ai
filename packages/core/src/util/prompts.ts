@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { Prompts, defaultPrompts } from '..';
+import { getDefaultPrompts, Prompts } from '..';
+import { Platform } from '@/initializer';
 
 const readFileOrDefault = async (parts: string[], defaultValue?: string) => {
     return await fs
@@ -8,7 +9,11 @@ const readFileOrDefault = async (parts: string[], defaultValue?: string) => {
         .catch(() => defaultValue ?? '');
 };
 
-export async function readPrompts(promptsPath: string[]): Promise<Prompts> {
+export async function readPrompts(
+    promptsPath: string[],
+    platform: Platform,
+): Promise<Prompts> {
+    const defaultPrompts = getDefaultPrompts(platform);
     const [chooseStepSystem, generateLayoutSystem, globalContext] =
         await Promise.all([
             readFileOrDefault(

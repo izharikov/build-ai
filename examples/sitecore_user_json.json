@@ -1,0 +1,25 @@
+{
+    "platform": "sitecore",
+    "storage": "local",
+    "sitecore": {
+        "useDotEnv": true,
+        "site": "blueprint",
+        "tenant": "[Connect Tenant]",
+        "organization": "[Organization ID]",
+        "graphql": {
+            "baseUrl": "https://example.sitecorecloud.io/"
+        },
+        "authentication": {
+            "type": "user_json"
+        },
+        "pageTemplateId": "{PAGE_TEMPLATE_ID}",
+        "dataFolderTemplateId": "{DATA_FOLDER_TEMPLATE_ID}",
+        "parentItemId": "{PARENT_ITEM_ID}",
+        "mainPlaceholder": "/headless-main/sxa-main/container-1"
+    },
+    "loadDotEnv": true,
+    "env": {
+        "OPENAI_API_KEY": "",
+        "EXA_API_KEY_": ""
+    }
+}

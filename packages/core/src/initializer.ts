@@ -138,7 +138,10 @@ export function createComponentsProvider(
 }
 
 export async function readPrompts(config: PageBuilderConfig) {
-    return utils.readPrompts(['.' + config.platform, 'prompts']);
+    return utils.readPrompts(
+        ['.' + config.platform, 'prompts'],
+        config.platform,
+    );
 }
 
 export async function createStorage(config: PageBuilderConfig) {
@@ -225,7 +228,10 @@ export async function loadPageBuilderJson(
         loadDotEnv();
     }
 
-    checkNotEmpty(process.env.OPENAI_API_KEY, 'OPENAI_API_KEY');
+    const provider = process.env.AI_PROVIDER || 'openai';
+    if (provider === 'openai') {
+        checkNotEmpty(process.env.OPENAI_API_KEY, 'OPENAI_API_KEY');
+    }
 
     if (config.platform === 'sitecore' && config.sitecore) {
         if (config.sitecore.useDotEnv) {
