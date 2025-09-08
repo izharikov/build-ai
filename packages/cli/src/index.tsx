@@ -78,11 +78,12 @@ const App = (props: AppProps) => {
 
 const cli = meow(
     `
-	Usage
-	  $ npx @build-ai/cli [options]
+Usage
+    $ npx @build-ai/cli [options]
 
-	Options
-	  --config, -c  config file path (default: config.json)
+Options
+    --config, -c    config file path (default: config.json)
+    --help          display help for command
 `,
     {
         importMeta: import.meta, // This is required
