@@ -6,7 +6,7 @@ import {
     ChooseStepResponse,
     LayoutResponseStream,
     CommandState,
-} from '@page-builder/core';
+} from '@build-ai/core';
 import { Spinner } from '@inkjs/ui';
 import { useEffect } from 'react';
 import { DataState, DeepPartial } from '@/lib/types';

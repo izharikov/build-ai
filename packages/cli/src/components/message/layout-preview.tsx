@@ -1,5 +1,5 @@
 import { DeepPartial } from '@/lib/types';
-import { LayoutComponent, LayoutResult } from '@page-builder/core/processors';
+import { LayoutComponent, LayoutResult } from '@build-ai/core/processors';
 import { Box, Text } from 'ink';
 import { InputMessage } from './input';
 import React, { useState } from 'react';

@@ -1,7 +1,7 @@
 import { UIMessage } from 'ai';
 import { useEffect, useState } from 'react';
 import { DataState, DeepPartial } from '../types';
-import { StateTypes } from '@page-builder/core';
+import { StateTypes } from '@build-ai/core';
 
 export function getData<T>(
     message: UIMessage | undefined,

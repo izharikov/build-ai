@@ -1,7 +1,7 @@
 import { useLoad } from '@/lib/react/useLoad';
 import { Option, Select, Spinner } from '@inkjs/ui';
-import { LayoutResult } from '@page-builder/core/processors';
-import { Storage } from '@page-builder/core/storage';
+import { LayoutResult } from '@build-ai/core/processors';
+import { Storage } from '@build-ai/core/storage';
 import { useState } from 'react';
 import { Chat } from './chat';
 import { ChatTransport, UIMessage } from 'ai';
