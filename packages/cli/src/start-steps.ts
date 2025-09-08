@@ -1,10 +1,10 @@
-import { Prompts, streamGenerateLayout } from '@page-builder/core';
+import { Prompts, streamGenerateLayout } from '@build-ai/core';
 import { StreamChatTransport } from './lib/StreamChatTransport';
 import { ChatTransport, UIMessage } from 'ai';
-import { Storage } from '@page-builder/core/storage';
-import { LayoutResult, ResultProcessor } from '@page-builder/core/processors';
-import { ComponentsProvider } from '@page-builder/core/components';
-import { initializer } from '@page-builder/core';
+import { Storage } from '@build-ai/core/storage';
+import { LayoutResult, ResultProcessor } from '@build-ai/core/processors';
+import { ComponentsProvider } from '@build-ai/core/components';
+import { initializer } from '@build-ai/core';
 import dotenv from 'dotenv';
 import findConfig from 'find-config';
 

@@ -6,6 +6,6 @@ export default defineConfig([
         format: ['esm'],
         dts: true,
         sourcemap: true,
-        noExternal: ['@inkjs/ui'],
+        noExternal: ['@inkjs/ui', 'punycode'],
     },
 ]);

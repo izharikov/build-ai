@@ -39,7 +39,7 @@ importers:
       '@inkjs/ui':
         specifier: ^2.0.0
         version: 2.0.0(ink@6.0.0(@types/react@19.1.8)(react-devtools-core@6.1.5)(react@19.1.0))
-      '@page-builder/core':
+      '@build-ai/core':
         specifier: workspace:*
         version: link:../core
       ai:

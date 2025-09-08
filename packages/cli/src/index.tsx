@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import React, { useEffect, useState } from 'react';
 import { render, Box, Text } from 'ink';
 import { Alert } from '@inkjs/ui';
@@ -9,8 +11,8 @@ import { StepType, useStartSteps } from './lib/react/useStartSteps';
 import { StartStepUI } from './components/start-step';
 import { ChatTransport, UIMessage } from 'ai';
 import { initialSteps } from './start-steps';
-import { LayoutResult } from '@page-builder/core/processors';
-import { Storage } from '@page-builder/core/storage';
+import { LayoutResult } from '@build-ai/core/processors';
+import { Storage } from '@build-ai/core/storage';
 import meow from 'meow';
 
 type AppProps = {
@@ -77,7 +79,7 @@ const App = (props: AppProps) => {
 const cli = meow(
     `
 	Usage
-	  $ npx @page-builder/cli [options]
+	  $ npx @build-ai/cli [options]
 
 	Options
 	  --config, -c  config file path (default: config.json)

@@ -9,7 +9,7 @@ Create a config file (see [config reference](#config-reference) for more details
 Then run:
 
 ```bash
-npx @page-builder/cli --config config.json
+npx @build-ai/cli --config config.json
 ```
 
 ## Config explanation
