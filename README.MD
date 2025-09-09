@@ -4,6 +4,8 @@
 
 AI Layout Builder is a tool that helps you create a page for a blog or website based on available components and a structure.
 
+![scheme](./architecture/architecture.png)
+
 ## Usage
 
 Create `config.json` file (see [config explanation](#config-explanation) for more details) and `.env` (see [.env reference](#env-file-reference) for more details).
